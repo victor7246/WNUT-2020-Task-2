@@ -1,0 +1,3 @@
+[submodule "COVID19Tweet"]
+	path = COVID19Tweet
+	url = https://github.com/VinAIResearch/COVID19Tweet.git
