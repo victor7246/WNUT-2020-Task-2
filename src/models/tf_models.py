@@ -285,16 +285,16 @@ def transformers_with_all_layers_with_meanpooling(pretrained_model_name, max_tex
     #print (len(embedding), embedding[0].shape, embedding[1].shape)
 
     if layer_nums == []:
-        states = tf.keras.layers.Concatenate()([embedding[-1][i] for i in range(1, len(embedding[-1]))])
+        x = tf.keras.layers.Concatenate()([embedding[-1][i] for i in range(1, len(embedding[-1]))])
 
     else:
-        states = tf.keras.layers.Concatenate()([embedding[-1][i] for  i in layer_nums])
+        x = tf.keras.layers.Concatenate()([embedding[-1][i] for  i in layer_nums])
 
     if spatial_dropout > 0:
-        states = tf.keras.layers.SpatialDropout1D(spatial_dropout)(states)
+        x = tf.keras.layers.SpatialDropout1D(spatial_dropout)(x)
 
-    x1 = tf.keras.layers.Conv1D(128, 2,padding='same')(states)
-    x1 = tf.keras.layers.LeakyReLU()(x1)
+    #x1 = tf.keras.layers.Conv1D(128, 2,padding='same')(states)
+    #x1 = tf.keras.layers.LeakyReLU()(x1)
 
     if spatial_dropout > 0:
         x = tf.keras.layers.SpatialDropout1D(spatial_dropout)(x)
@@ -340,16 +340,16 @@ def transformers_with_all_layers_with_maxpooling(pretrained_model_name, max_text
     #print (len(embedding), embedding[0].shape, embedding[1].shape)
 
     if layer_nums == []:
-        states = tf.keras.layers.Concatenate()([embedding[-1][i] for i in range(1, len(embedding[-1]))])
+        x = tf.keras.layers.Concatenate()([embedding[-1][i] for i in range(1, len(embedding[-1]))])
 
     else:
-        states = tf.keras.layers.Concatenate()([embedding[-1][i] for  i in layer_nums])
+        x = tf.keras.layers.Concatenate()([embedding[-1][i] for  i in layer_nums])
 
     if spatial_dropout > 0:
-        states = tf.keras.layers.SpatialDropout1D(spatial_dropout)(states)
+        x = tf.keras.layers.SpatialDropout1D(spatial_dropout)(x)
 
-    x1 = tf.keras.layers.Conv1D(128, 2,padding='same')(states)
-    x1 = tf.keras.layers.LeakyReLU()(x1)
+    #x1 = tf.keras.layers.Conv1D(128, 2,padding='same')(states)
+    #x1 = tf.keras.layers.LeakyReLU()(x1)
 
     if spatial_dropout > 0:
         x = tf.keras.layers.SpatialDropout1D(spatial_dropout)(x)

@@ -8,7 +8,7 @@ pandas
 numpy
 tqdm
 sklearn
-transformers
+transformers==2.8.0
 pytorch-lightning
 wandb
 tokenizers

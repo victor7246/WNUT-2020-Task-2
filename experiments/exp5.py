@@ -1,4 +1,4 @@
-############# Mean/Max pooling of all tokens from last layers ###########
+############# BERT multiple layers runs ###########
 ################################################################
 
 from __future__ import absolute_import
@@ -83,10 +83,18 @@ def main(args):
 
 
     print ("Modelling")
+    if args.layers != '' and len(args.layers.split('_')) > 1:
+        try:
+            layer_nums = [int(i) for i in args.layers.split('_')]
+        except:
+            layer_nums = []
+    else:
+        layer_nums = []
+
     if args.pooling_type == 'mean':
-        model = models.tf_models.transformer_base_model_mean_pooling(args.transformer_model_name, args.max_text_len, dropout=args.dropout)
+        model = models.tf_models.transformers_with_all_layers_with_meanpooling(args.transformer_model_name, args.max_text_len, dropout=args.dropout, layer_nums=layer_nums)
     elif args.pooling_type == 'max':
-        model = models.tf_models.transformer_base_model_max_pooling(args.transformer_model_name, args.max_text_len, dropout=args.dropout)
+        model = models.tf_models.transformers_with_all_layers_with_maxpooling(args.transformer_model_name, args.max_text_len, dropout=args.dropout, layer_nums=layer_nums)
     else:
         raise ValueError("{} pooling type not supported".format(args.pooling_type))
 
@@ -108,7 +116,8 @@ def main(args):
       "learning_rate": args.lr,
       "batch_size": args.train_batch_size,
       "dropout": args.dropout,
-      "model_description": args.transformer_model_name + ' {} of all tokens from last layer'.format(args.pooling_type)
+      "layer_nums": args.layers,
+      "model_description": args.transformer_model_name + ' {} of all tokens from layers {}'.format(args.pooling_type, args.layers)
     }
 
     with open(os.path.join(model_save_dir, 'config.pkl'), 'wb') as handle:
@@ -143,7 +152,7 @@ def main(args):
     #recall = recall_score([idx2label[i] for i in val_df.labels], [idx2label[i] for i in val_pred])
 
     results_ = pd.DataFrame()
-    results_['description'] = [args.transformer_model_name + ' {} of all tokens from last layer'.format(args.pooling_type)]
+    results_['description'] = [args.transformer_model_name + ' {} of all tokens from layers {}'.format(args.pooling_type, args.layers)]
     results_['f1'] = [f1]
     results_['precision'] = [precision]
     results_['recall'] = [recall]
@@ -176,6 +185,8 @@ if __name__ == '__main__':
                     help='maximum length of text')
     parser.add_argument('--dropout', type=float, default=.2, required=False,
                     help='dropout')
+    parser.add_argument('--layers', type=str, default='', required=False,
+                    help='layers')
 
     parser.add_argument('--pooling_type', type=str, default='mean', required=False,
                         help='pooling type. e.g. - mean or, max')
