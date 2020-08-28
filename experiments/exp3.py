@@ -58,11 +58,10 @@ def main(args):
                                                          save_path=os.path.join(model_save_dir,'label2idx.pkl'))
 
     print ("Tokenization")
-    trainX, tokenizer = data.data_utils.compute_lstm_input_arrays(train_df, 'words', args.max_text_len)
-    valX, _ = data.data_utils.compute_lstm_input_arrays(val_df, 'words', args.max_text_len, tokenizer=tokenizer)
+    tokenizer = AutoTokenizer.from_pretrained(args.transformer_model_name)
 
-    trainX = np.asarray(trainX)
-    valX = np.asarray(valX)
+    trainX = data.data_utils.compute_transformer_input_arrays(train_df, 'words', tokenizer, args.max_text_len)
+    valX = data.data_utils.compute_transformer_input_arrays(val_df, 'words', tokenizer, args.max_text_len)
 
     outputs = data.data_utils.compute_output_arrays(train_df, 'labels')
     val_outputs = data.data_utils.compute_output_arrays(val_df, 'labels')
@@ -70,10 +69,9 @@ def main(args):
     outputs = outputs[:,np.newaxis]
     val_outputs = val_outputs[:,np.newaxis]
 
-    num_words = len(tokenizer.word_index)
 
     print ("Modelling")
-    model = models.tf_models.bilstm(args.n_lstm, args.max_text_len, num_words, args.emb_dim, dropout=args.dropout)
+    model = models.tf_models.transformer_base_model_cls_token(args.transformer_model_name, args.max_text_len, dropout=args.dropout)
 
     print (model.summary())
 
@@ -81,21 +79,19 @@ def main(args):
 
     model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics='accuracy') #binary_crossentropy
 
-    early = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=8, \
+    early = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=5, \
                                          verbose=1, mode='auto', restore_best_weights=True)
     lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_accuracy', factor=0.7, \
-                                          patience=5, verbose=1, mode='auto', min_lr=0.000001)
-    f1callback = models.tf_utils.F1Callback(model, valX, val_outputs, filename=os.path.join(model_save_dir, 'model.h5'), patience=8)
+                                          patience=3, verbose=1, mode='auto', min_lr=0.000001)
+    f1callback = models.tf_utils.F1Callback(model, valX, val_outputs, filename=os.path.join(model_save_dir, 'model.h5'), patience=5)
 
     config = {
       'text_max_len': args.max_text_len,
       'epochs': args.epochs,
       "learning_rate": args.lr,
       "batch_size": args.train_batch_size,
-      "n_lstm": args.n_lstm,
-      "emb_dim": args.emb_dim,
       "dropout": args.dropout,
-      "model_description": "LSTM",
+      "model_description": args.transformer_model_name.replace('/',''),
     }
 
     with open(os.path.join(model_save_dir, 'config.pkl'), 'wb') as handle:
@@ -129,13 +125,13 @@ def main(args):
     #recall = recall_score([idx2label[i] for i in val_df.labels], [idx2label[i] for i in val_pred])
 
     results_ = pd.DataFrame()
-    results_['description'] = ['Bi-LSTM']
+    results_['description'] = [args.transformer_model_name]
     results_['f1'] = [f1]
     results_['precision'] = [precision]
     results_['recall'] = [recall]
 
     print (results_)
-
+    
     if os.path.exists('../results/result.csv'):
         results = pd.read_csv('../results/result.csv')
         results = pd.concat([results, results_], axis=0)
@@ -152,23 +148,21 @@ if __name__ == '__main__':
     parser.add_argument('--val_data', type=str, default='../data/raw/COVID19Tweet/valid.tsv', required=False,
                         help='validation data')
 
-    parser.add_argument('--model_save_path', type=str, default='../models/model2/', required=False,
+    parser.add_argument('--transformer_model_name', type=str, default='roberta-base', required=False,
+                        help='transformer model name')
+
+    parser.add_argument('--model_save_path', type=str, default='../models/model3/', required=False,
                         help='model save path')
 
     parser.add_argument('--max_text_len', type=int, default=100, required=False,
                     help='maximum length of text')
-    parser.add_argument('--n_lstm', type=int, default=128, required=False,
-                    help='number of LSTM units')
-    parser.add_argument('--emb_dim', type=int, default=100, required=False,
-                    help='word embedding dimension')
     parser.add_argument('--dropout', type=float, default=.2, required=False,
                     help='dropout')
 
-    parser.add_argument('--epochs', type=int, default=30, required=False,
+    parser.add_argument('--epochs', type=int, default=15, required=False,
                         help='number of epochs')
-    parser.add_argument('--lr', type=float, default=.001, required=False,
+    parser.add_argument('--lr', type=float, default=.00002, required=False,
                         help='learning rate')
-
 
     parser.add_argument('--train_batch_size', type=int, default=32, required=False,
                         help='train batch size')
