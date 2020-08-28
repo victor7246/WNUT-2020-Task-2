@@ -85,7 +85,7 @@ def transformer_base_model_mean_pooling(pretrained_model_name, max_text_len, spa
         basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
     
     # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
-    x = basemodel(ids, attention_mask=mask)[1]
+    x = basemodel(ids, attention_mask=mask)[0]
     
     if spatial_dropout > 0:
         x = tf.keras.layers.SpatialDropout1D(spatial_dropout)(x)
@@ -131,7 +131,7 @@ def transformer_base_model_max_pooling(pretrained_model_name, max_text_len, spat
         basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
     
     # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
-    x = basemodel(ids, attention_mask=mask)[1]
+    x = basemodel(ids, attention_mask=mask)[0]
     
     if spatial_dropout > 0:
         x = tf.keras.layers.SpatialDropout1D(spatial_dropout)(x)

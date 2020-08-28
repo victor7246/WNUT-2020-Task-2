@@ -103,7 +103,7 @@ def main(args):
       "learning_rate": args.lr,
       "batch_size": args.train_batch_size,
       "dropout": args.dropout,
-      "model_description": args.transformer_model_name.split('/')[-1]
+      "model_description": args.transformer_model_name
     }
 
     with open(os.path.join(model_save_dir, 'config.pkl'), 'wb') as handle:
@@ -138,7 +138,7 @@ def main(args):
     #recall = recall_score([idx2label[i] for i in val_df.labels], [idx2label[i] for i in val_pred])
 
     results_ = pd.DataFrame()
-    results_['description'] = [args.transformer_model_name.split('/')[-1]]
+    results_['description'] = [args.transformer_model_name]
     results_['f1'] = [f1]
     results_['precision'] = [precision]
     results_['recall'] = [recall]

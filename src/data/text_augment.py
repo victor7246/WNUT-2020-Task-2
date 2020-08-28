@@ -76,7 +76,7 @@ def masked_augment_df(df, text_column, aug_p=.2):
     for i in tqdm(range(df.shape[0])):
         augmented_txt = bert_augment(df[text_column].iloc[i], aug_p)
         if augmented_txt:
-            texts.append(translated_txt)
+            texts.append(augmented_txt)
 
     if len(texts) == df.shape[0]:
         updated_df = df.copy()
