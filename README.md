@@ -38,9 +38,5 @@ execute RoBERTa baseline by running
 |  RoBERTa<sub>base</sub> | <b>0.908</b>  |  0.872 |  <b>0.949</b> |
 |  ALBERT<sub>base</sub> | 0.892  |  <b>0.882</b> |  0.902 |
 
-## Dashboard
-
-https://app.wandb.ai/victor7246/wnut-task2/reports/Untitled-Report--VmlldzoyMjAxNTQ?highlightShare
-
 ## Citation
 
