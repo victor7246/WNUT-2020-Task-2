@@ -44,23 +44,37 @@ def convert_categorical_label_to_int(labels,save_path=None):
 
     return new_labels, label_to_id
 
-def _convert_to_transformer_inputs(text, tokenizer, max_sequence_length):
+def _convert_to_transformer_inputs(text, tokenizer, max_sequence_length, bertweettokenizer=False):
     """Converts tokenized input to ids, masks and segments for transformer (including bert)"""
     
     def return_id(str1, str2, truncation_strategy, length):
 
-        try:
-            inputs = tokenizer.encode_plus(str1, str2,
-                add_special_tokens=True,
-                max_length=length,
-                truncation_strategy=truncation_strategy, truncation=True)
-        except:
-            inputs = tokenizer.encode_plus(str1, str2,
-                add_special_tokens=True,
-                max_length=length,
-                truncation_strategy=truncation_strategy)
+        if bertweettokenizer == False:
+            try:
+                inputs = tokenizer.encode_plus(str1, str2,
+                    add_special_tokens=True,
+                    max_length=length,
+                    truncation_strategy=truncation_strategy, truncation=True)
+            except:
+                inputs = tokenizer.encode_plus(str1, str2,
+                    add_special_tokens=True,
+                    max_length=length,
+                    truncation_strategy=truncation_strategy)
+
+            input_ids =  inputs["input_ids"]
+        else:
+            input_ids = tokenizer.encode(str1)
+            
+            if len(input_ids) <= max_sequence_length-2:
+                input_ids = [tokenizer.cls_token_id] + input_ids + [tokenizer.sep_token_id]
+                if max_sequence_length - len(input_ids) > 0:
+                    input_ids = input_ids + [tokenizer.pad_token_id]*(max_sequence_length - len(input_ids))
+            else:
+                input_ids = input_ids[:max_sequence_length-2]
+                input_ids = [tokenizer.cls_token_id] + input_ids + [tokenizer.sep_token_id]
+                if max_sequence_length - len(input_ids) > 0:
+                    input_ids = input_ids + [tokenizer.pad_token_id]*(max_sequence_length - len(input_ids))
         
-        input_ids =  inputs["input_ids"]
         input_masks = [1] * len(input_ids)
         input_segments = [0]*(len(input_ids)-1) + [1] #inputs["token_type_ids"]
         padding_length = length - len(input_ids)
@@ -76,13 +90,13 @@ def _convert_to_transformer_inputs(text, tokenizer, max_sequence_length):
     
     return [input_ids, input_masks, input_segments]
 
-def compute_transformer_input_arrays(df, column, tokenizer, max_sequence_length):
+def compute_transformer_input_arrays(df, column, tokenizer, max_sequence_length, bertweettokenizer=False):
     input_ids, input_masks, input_segments = [], [], []
 
     for i in tqdm(range(df.shape[0])):
         t = df[column].iloc[i]
 
-        ids, masks, segments = _convert_to_transformer_inputs(t, tokenizer, max_sequence_length)
+        ids, masks, segments = _convert_to_transformer_inputs(t, tokenizer, max_sequence_length, bertweettokenizer=bertweettokenizer)
         
         input_ids.append(ids)
         input_masks.append(masks)

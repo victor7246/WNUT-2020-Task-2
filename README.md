@@ -34,8 +34,9 @@ execute RoBERTa baseline by running
 |  Model | F1  | Precision  | Recall  |
 |---|---|---|---|
 | Logistic Regression   | 0.762  | 0.806  | 0.722  |
-|  Bi-LSTM |  0.808 |  0.854 |  0.767 |
-|  RoBERTa<sub>base</sub> |   |   |   |
+|  BiLSTM |  0.808 |  0.854 |  0.767 |
+|  RoBERTa<sub>base</sub> | 0.908  |  0.87 |  0.949 |
+|  ALBERT<sub>base</sub> | 0.892  |  0.882 |  0.902 |
 
 ## Citation
 

@@ -1,3 +1,6 @@
+############# Roberta, Albert, BERTweet base model runs ###########
+################################################################
+
 from __future__ import absolute_import
 
 import sys
@@ -58,10 +61,19 @@ def main(args):
                                                          save_path=os.path.join(model_save_dir,'label2idx.pkl'))
 
     print ("Tokenization")
-    tokenizer = AutoTokenizer.from_pretrained(args.transformer_model_name)
 
-    trainX = data.data_utils.compute_transformer_input_arrays(train_df, 'words', tokenizer, args.max_text_len)
-    valX = data.data_utils.compute_transformer_input_arrays(val_df, 'words', tokenizer, args.max_text_len)
+    if 'bertweet' in args.transformer_model_name.lower():
+        bertweettokenizer = True
+    else:
+        bertweettokenizer = False
+
+    if bertweettokenizer == True:
+        tokenizer = data.custom_tokenizers.BERTweetTokenizer(args.transformer_model_name)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(args.transformer_model_name)
+
+    trainX = data.data_utils.compute_transformer_input_arrays(train_df, 'words', tokenizer, args.max_text_len, bertweettokenizer)
+    valX = data.data_utils.compute_transformer_input_arrays(val_df, 'words', tokenizer, args.max_text_len, bertweettokenizer)
 
     outputs = data.data_utils.compute_output_arrays(train_df, 'labels')
     val_outputs = data.data_utils.compute_output_arrays(val_df, 'labels')
@@ -91,7 +103,7 @@ def main(args):
       "learning_rate": args.lr,
       "batch_size": args.train_batch_size,
       "dropout": args.dropout,
-      "model_description": args.transformer_model_name.replace('/',''),
+      "model_description": args.transformer_model_name.split('/')[-1]
     }
 
     with open(os.path.join(model_save_dir, 'config.pkl'), 'wb') as handle:
@@ -99,18 +111,19 @@ def main(args):
 
     K.clear_session()
 
-    if _has_wandb and args.wandb_logging:
-        wandb.init(project='wnut-task2',config=config)
-        model.fit(trainX, outputs, validation_data=(valX, val_outputs), epochs=args.epochs,\
-              batch_size=args.train_batch_size, callbacks=[early, lr, f1callback, WandbCallback()], verbose=1)
-    else:
-        model.fit(trainX, outputs, validation_data=(valX, val_outputs), epochs=args.epochs,\
-              batch_size=args.train_batch_size, callbacks=[early,lr, f1callback], verbose=1)
+    if os.path.exists(os.path.join(model_save_dir, 'model.h5')) == False:
+        if _has_wandb and args.wandb_logging:
+            wandb.init(project='wnut-task2',config=config)
+            model.fit(trainX, outputs, validation_data=(valX, val_outputs), epochs=args.epochs,\
+                  batch_size=args.train_batch_size, callbacks=[early, lr, f1callback, WandbCallback()], verbose=1)
+        else:
+            model.fit(trainX, outputs, validation_data=(valX, val_outputs), epochs=args.epochs,\
+                  batch_size=args.train_batch_size, callbacks=[early,lr, f1callback], verbose=1)
 
     model.load_weights(os.path.join(model_save_dir, 'model.h5'))
-    model_json = model.to_json()
-    with open(os.path.join(model_save_dir,"model.json"), "w") as json_file:
-        json_file.write(model_json)
+    #model_json = model.to_json()
+    #with open(os.path.join(model_save_dir,"model.json"), "w") as json_file:
+    #    json_file.write(model_json)
 
     val_pred = np.round(model.predict(valX))[:,0]
 
@@ -125,7 +138,7 @@ def main(args):
     #recall = recall_score([idx2label[i] for i in val_df.labels], [idx2label[i] for i in val_pred])
 
     results_ = pd.DataFrame()
-    results_['description'] = [args.transformer_model_name]
+    results_['description'] = [args.transformer_model_name.split('/')[-1]]
     results_['f1'] = [f1]
     results_['precision'] = [precision]
     results_['recall'] = [recall]

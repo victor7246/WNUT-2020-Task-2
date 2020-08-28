@@ -38,9 +38,12 @@ def transformer_base_model_cls_token(pretrained_model_name, max_text_len, dropou
     if bert_hidden_dropout and dropout > 0:
         config.hidden_dropout_prob = dropout
 
-    basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+    if 'bertweet' in pretrained_model_name.lower():
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
+    else:
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
     
-    # if config.output_hidden_states = True, obtain hidden states via bert_model(...)[-1]
+    # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
     x = basemodel(ids, attention_mask=mask)[1]
     
     if multidrop_num > 0 and dropout > 0:
@@ -76,9 +79,12 @@ def transformer_base_model_mean_pooling(pretrained_model_name, max_text_len, spa
     if bert_hidden_dropout and dropout > 0:
         config.hidden_dropout_prob = dropout
 
-    basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+    if 'bertweet' in pretrained_model_name.lower():
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
+    else:
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
     
-    # if config.output_hidden_states = True, obtain hidden states via bert_model(...)[-1]
+    # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
     x = basemodel(ids, attention_mask=mask)[1]
     
     if spatial_dropout > 0:
@@ -119,9 +125,12 @@ def transformer_base_model_max_pooling(pretrained_model_name, max_text_len, spat
     if bert_hidden_dropout and dropout > 0:
         config.hidden_dropout_prob = dropout
 
-    basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+    if 'bertweet' in pretrained_model_name.lower():
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
+    else:
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
     
-    # if config.output_hidden_states = True, obtain hidden states via bert_model(...)[-1]
+    # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
     x = basemodel(ids, attention_mask=mask)[1]
     
     if spatial_dropout > 0:
@@ -161,10 +170,13 @@ def transformer_with_cnn_with_meanpooling(pretrained_model_name, max_text_len, s
     if bert_hidden_dropout and dropout > 0:
         config.hidden_dropout_prob = dropout
 
-    bert_model = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+    if 'bertweet' in pretrained_model_name.lower():
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
+    else:
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
 
-    # if config.output_hidden_states = True, obtain hidden states via bert_model(...)[-1]
-    embedding = bert_model([ids, masks])
+    # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
+    embedding = basemodel([ids, masks])
 
     x = embedding[0]
     
@@ -212,10 +224,13 @@ def transformer_with_cnn_with_maxpooling(pretrained_model_name, max_text_len, sp
     if bert_hidden_dropout and dropout > 0:
         config.hidden_dropout_prob = dropout
 
-    bert_model = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+    if 'bertweet' in pretrained_model_name.lower():
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
+    else:
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
 
-    # if config.output_hidden_states = True, obtain hidden states via bert_model(...)[-1]
-    embedding = bert_model([ids, masks])
+    # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
+    embedding = basemodel([ids, masks])
 
     x = embedding[0]
     
@@ -259,10 +274,13 @@ def transformers_with_all_layers_with_meanpooling(pretrained_model_name, max_tex
     if bert_hidden_dropout and dropout > 0:
         config.hidden_dropout_prob = dropout
 
-    bert_model = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+    if 'bertweet' in pretrained_model_name.lower():
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
+    else:
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
 
-    # if config.output_hidden_states = True, obtain hidden states via bert_model(...)[-1]
-    embedding = bert_model([ids, masks])
+    # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
+    embedding = basemodel([ids, masks])
 
     #print (len(embedding), embedding[0].shape, embedding[1].shape)
 
@@ -311,10 +329,13 @@ def transformers_with_all_layers_with_maxpooling(pretrained_model_name, max_text
     if bert_hidden_dropout and dropout > 0:
         config.hidden_dropout_prob = dropout
 
-    bert_model = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+    if 'bertweet' in pretrained_model_name.lower():
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
+    else:
+        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
 
-    # if config.output_hidden_states = True, obtain hidden states via bert_model(...)[-1]
-    embedding = bert_model([ids, masks])
+    # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
+    embedding = basemodel([ids, masks])
 
     #print (len(embedding), embedding[0].shape, embedding[1].shape)
 
