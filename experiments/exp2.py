@@ -37,11 +37,12 @@ from sklearn.metrics import f1_score, precision_score, recall_score
 def main(args):
     train_df = data.load_data.load_custom_text_as_pd(args.train_data,sep='\t',header=True, \
                               text_column=['Text'],target_column=['Label'])
-    val_df = data.load_data.load_custom_text_as_pd(args.val_data,sep='\t', header=True, \
+    val_df = data.load_data.load_custom_text_as_pd(args.val_data,sep='\t', header=False, \
                           text_column=['Text'],target_column=['Label'])
 
     train_df = pd.DataFrame(train_df,copy=False)
     val_df = pd.DataFrame(val_df,copy=False)
+    val_df.columns = train_df.columns
 
     model_save_dir = args.model_save_path
 
@@ -133,6 +134,8 @@ def main(args):
     results_['precision'] = [precision]
     results_['recall'] = [recall]
 
+    print (results_)
+    
     if os.path.exists('../results/result.csv'):
         results = pd.read_csv('../results/result.csv')
         results = pd.concat([results, results_], axis=0)
@@ -144,9 +147,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(prog='Trainer',conflict_handler='resolve')
 
-    parser.add_argument('--train_data', type=str, default='../data/raw/COVID19Tweet-master/train.tsv', required=False,
+    parser.add_argument('--train_data', type=str, default='../data/raw/COVID19Tweet/train.tsv', required=False,
                         help='train data')
-    parser.add_argument('--val_data', type=str, default='../data/raw/COVID19Tweet-master/valid.tsv', required=False,
+    parser.add_argument('--val_data', type=str, default='../data/raw/COVID19Tweet/valid.tsv', required=False,
                         help='validation data')
 
     parser.add_argument('--model_save_path', type=str, default='../models/model2/', required=False,
