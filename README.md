@@ -35,8 +35,8 @@ execute RoBERTa baseline by running
 |---|---|---|---|
 | Logistic Regression   | 0.762  | 0.806  | 0.722  |
 |  BiLSTM |  0.808 |  0.854 |  0.767 |
-|  RoBERTa<sub>base</sub> | 0.908  |  0.872 |  0.949 |
-|  ALBERT<sub>base</sub> | 0.892  |  0.882 |  0.902 |
+|  RoBERTa<sub>base</sub> | <b>0.908</b>  |  0.872 |  <b>0.949</b> |
+|  ALBERT<sub>base</sub> | 0.892  |  <b>0.882</b> |  0.902 |
 
 ## Citation
 
