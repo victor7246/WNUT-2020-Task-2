@@ -134,7 +134,7 @@ def main(args):
     results_['precision'] = [precision]
     results_['recall'] = [recall]
 
-    print (results_)
+    print (results_.iloc[0])
 
     if os.path.exists('../results/result.csv'):
         results = pd.read_csv('../results/result.csv')
@@ -179,7 +179,8 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42, required=False,
                         help='seed')
 
-    args, _ = parser.parse_known_args()
+    #args, _ = parser.parse_known_args()
+    args = parser.parse_args()
 
     tf.random.set_seed(args.seed)
     np.random.seed(args.seed)

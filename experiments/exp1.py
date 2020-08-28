@@ -86,7 +86,7 @@ def main(args):
     results_['precision'] = [precision]
     results_['recall'] = [recall]
 
-    print (results_)
+    print (results_.iloc[0])
 
     with open(os.path.join(model_save_dir, 'vectorizer.pkl'), 'wb') as handle:
         pickle.dump(tfidf, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -115,7 +115,8 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42, required=False,
                         help='seed')
 
-    args, _ = parser.parse_known_args()
+    #args, _ = parser.parse_known_args()
+    args = parser.parse_args()
 
     np.random.seed(args.seed)
 
