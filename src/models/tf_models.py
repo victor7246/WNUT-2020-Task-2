@@ -47,7 +47,11 @@ def transformer_base_model_cls_token(pretrained_model_name, max_text_len, dropou
             basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
     
     # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
-    x = basemodel(ids, attention_mask=mask)[1]
+    if 'xlnet' in pretrained_model_name.lower():
+        x = basemodel(ids, attention_mask=mask)[0]
+        x = x[:,0,:]
+    else:
+        x = basemodel(ids, attention_mask=mask)[1]
     
     if multidrop_num > 0 and dropout > 0:
         multidrops = [tf.keras.layers.Dropout(dropout) for i in multidrop_num]

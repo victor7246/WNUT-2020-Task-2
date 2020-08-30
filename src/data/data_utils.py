@@ -76,7 +76,7 @@ def _convert_to_transformer_inputs(text, tokenizer, max_sequence_length, text2=N
                     input_ids = input_ids + [tokenizer.pad_token_id]*(max_sequence_length - len(input_ids))
         
         input_masks = [1] * len(input_ids)
-        input_segments = [0]*(len(input_ids)-1) + [1] #inputs["token_type_ids"]
+        input_segments = [tokenizer.cls_token_id]*(len(input_ids)-1) + [tokenizer.sep_token_id] #inputs["token_type_ids"]
         padding_length = length - len(input_ids)
         padding_id = tokenizer.pad_token_id
         input_ids = input_ids + ([padding_id] * padding_length)
