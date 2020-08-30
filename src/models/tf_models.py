@@ -178,17 +178,23 @@ def transformer_with_cnn_with_meanpooling(pretrained_model_name, max_text_len, s
     # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
     embedding = basemodel([ids, masks])
 
-    x = embedding[0]
-    
-    if spatial_dropout > 0:
-        x = tf.keras.layers.SpatialDropout1D(spatial_dropout)(x)
+    states = tf.keras.layers.Concatenate(-1)([embedding[-1][9],embedding[-1][10],embedding[-1][11],embedding[-1][12]])
 
-    x1 = wave_block(x, 128, 3, 8)
+    emb = embedding[-1][0]
+
+    if spatial_dropout > 0:
+        states = tf.keras.layers.SpatialDropout1D(spatial_dropout)(states)
+        emb = tf.keras.layers.SpatialDropout1D(spatial_dropout)(emb)
+
+    x1 = wave_block(states, 128, 3, 8)
     x1 = tf.keras.layers.LayerNormalization()(x1) #BatchNormalization()(x)
     x1 = wave_block(x1, 64, 3, 4)
-    x1 = cbr(x1, 32, 7, 1, 1)
-    x1 = tf.keras.layers.LayerNormalization()(x1) #BatchNormalization()(x)
-    x1 = tf.keras.layers.Dropout(0.2)(x1)
+
+    x2 = wave_block(emb, 128, 3, 8)
+    x2 = tf.keras.layers.LayerNormalization()(x2) #BatchNormalization()(x)
+    x2 = wave_block(x2, 64, 3, 4)
+
+    x = tf.keras.layers.Concatenate(-1)([x1, x2])
 
     x = tf.keras.layers.GlobalAveragePooling1D()(x1)
 
@@ -202,7 +208,6 @@ def transformer_with_cnn_with_meanpooling(pretrained_model_name, max_text_len, s
             x = tf.keras.layers.Dense(1, activation='sigmoid')(x)
 
         else:
-
             x2 = tf.keras.layers.Concatenate()([denses[i](drop_layer[i](x)) for i in range(multidrop_num)])
             x = tf.keras.layers.Dense(1, use_bias=False, activation='linear')(x2)
             x = tf.keras.layers.Activation('sigmoid')(x)
@@ -229,22 +234,31 @@ def transformer_with_cnn_with_maxpooling(pretrained_model_name, max_text_len, sp
     else:
         basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
 
-    # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
     embedding = basemodel([ids, masks])
 
-    x = embedding[0]
-    
-    if spatial_dropout > 0:
-        x = tf.keras.layers.SpatialDropout1D(spatial_dropout)(x)
+    states = tf.keras.layers.Concatenate(-1)([embedding[-1][9],embedding[-1][10],embedding[-1][11],embedding[-1][12]])
 
-    x1 = wave_block(x, 128, 3, 8)
+    emb = embedding[-1][0]
+
+    if spatial_dropout > 0:
+        states = tf.keras.layers.SpatialDropout1D(spatial_dropout)(states)
+        emb = tf.keras.layers.SpatialDropout1D(spatial_dropout)(emb)
+
+    x1 = wave_block(states, 128, 3, 8)
     x1 = tf.keras.layers.LayerNormalization()(x1) #BatchNormalization()(x)
     x1 = wave_block(x1, 64, 3, 4)
-    x1 = cbr(x1, 32, 7, 1, 1)
-    x1 = tf.keras.layers.LayerNormalization()(x1) #BatchNormalization()(x)
-    x1 = tf.keras.layers.Dropout(0.2)(x1)
+
+    x2 = wave_block(emb, 128, 3, 8)
+    x2 = tf.keras.layers.LayerNormalization()(x2) #BatchNormalization()(x)
+    x2 = wave_block(x2, 64, 3, 4)
+
+    x = tf.keras.layers.Concatenate(-1)([x1, x2])
 
     x = tf.keras.layers.GlobalMaxPooling1D()(x1)
+
+    if multidrop_num > 0 and dropout > 0:
+        multidrops = [tf.keras.layers.Dropout(dropout) for i in multidrop_num]
+        denses = [tf.keras.layers.Dense(1, activation='linear') for i in multidrop_num]
 
     if dropout > 0:
         if multidrop_num == 0:
@@ -252,7 +266,6 @@ def transformer_with_cnn_with_maxpooling(pretrained_model_name, max_text_len, sp
             x = tf.keras.layers.Dense(1, activation='sigmoid')(x)
 
         else:
-
             x2 = tf.keras.layers.Concatenate()([denses[i](drop_layer[i](x)) for i in range(multidrop_num)])
             x = tf.keras.layers.Dense(1, use_bias=False, activation='linear')(x2)
             x = tf.keras.layers.Activation('sigmoid')(x)
