@@ -44,7 +44,7 @@ def convert_categorical_label_to_int(labels,save_path=None):
 
     return new_labels, label_to_id
 
-def _convert_to_transformer_inputs(text, tokenizer, max_sequence_length, bertweettokenizer=False):
+def _convert_to_transformer_inputs(text, tokenizer, max_sequence_length, text2=None, bertweettokenizer=False):
     """Converts tokenized input to ids, masks and segments for transformer (including bert)"""
     
     def return_id(str1, str2, truncation_strategy, length):
@@ -86,18 +86,21 @@ def _convert_to_transformer_inputs(text, tokenizer, max_sequence_length, bertwee
         return [input_ids, input_masks, input_segments]
     
     input_ids, input_masks, input_segments = return_id(
-        text, None, 'longest_first', max_sequence_length)
+        text, text2, 'longest_first', max_sequence_length)
     
     return [input_ids, input_masks, input_segments]
 
-def compute_transformer_input_arrays(df, column, tokenizer, max_sequence_length, bertweettokenizer=False):
+def compute_transformer_input_arrays(df, column1, tokenizer, max_sequence_length, column2=None, bertweettokenizer=False):
     input_ids, input_masks, input_segments = [], [], []
 
     for i in tqdm(range(df.shape[0])):
-        t = df[column].iloc[i]
+        t = df[column1].iloc[i]
 
-        ids, masks, segments = _convert_to_transformer_inputs(t, tokenizer, max_sequence_length, bertweettokenizer=bertweettokenizer)
-        
+        if column2:
+            ids, masks, segments = _convert_to_transformer_inputs(t, tokenizer, max_sequence_length, text2=df[column2].iloc[i], bertweettokenizer=bertweettokenizer)
+        else:
+            ids, masks, segments = _convert_to_transformer_inputs(t, tokenizer, max_sequence_length, bertweettokenizer=bertweettokenizer)
+
         input_ids.append(ids)
         input_masks.append(masks)
         input_segments.append(segments)

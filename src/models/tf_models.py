@@ -41,7 +41,10 @@ def transformer_base_model_cls_token(pretrained_model_name, max_text_len, dropou
     if 'bertweet' in pretrained_model_name.lower():
         basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
     else:
-        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        try:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        except:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
     
     # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
     x = basemodel(ids, attention_mask=mask)[1]
@@ -82,7 +85,10 @@ def transformer_base_model_mean_pooling(pretrained_model_name, max_text_len, spa
     if 'bertweet' in pretrained_model_name.lower():
         basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
     else:
-        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        try:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        except:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
     
     # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
     x = basemodel(ids, attention_mask=mask)[0]
@@ -128,7 +134,10 @@ def transformer_base_model_max_pooling(pretrained_model_name, max_text_len, spat
     if 'bertweet' in pretrained_model_name.lower():
         basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
     else:
-        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        try:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        except:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
     
     # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
     x = basemodel(ids, attention_mask=mask)[0]
@@ -173,7 +182,10 @@ def transformer_with_cnn_with_meanpooling(pretrained_model_name, max_text_len, s
     if 'bertweet' in pretrained_model_name.lower():
         basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
     else:
-        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        try:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        except:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
 
     # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
     embedding = basemodel([ids, masks])
@@ -232,7 +244,10 @@ def transformer_with_cnn_with_maxpooling(pretrained_model_name, max_text_len, sp
     if 'bertweet' in pretrained_model_name.lower():
         basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
     else:
-        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        try:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        except:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
 
     embedding = basemodel([ids, masks])
 
@@ -290,7 +305,10 @@ def transformers_with_all_layers_with_meanpooling(pretrained_model_name, max_tex
     if 'bertweet' in pretrained_model_name.lower():
         basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
     else:
-        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        try:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        except:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
 
     # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
     embedding = basemodel([ids, masks])
@@ -345,7 +363,10 @@ def transformers_with_all_layers_with_maxpooling(pretrained_model_name, max_text
     if 'bertweet' in pretrained_model_name.lower():
         basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
     else:
-        basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        try:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config)
+        except:
+            basemodel = TFAutoModel.from_pretrained(pretrained_model_name,config=config, from_pt=True)
 
     # if config.output_hidden_states = True, obtain hidden states via basemodel(...)[-1]
     embedding = basemodel([ids, masks])

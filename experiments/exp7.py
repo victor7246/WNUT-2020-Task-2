@@ -1,4 +1,4 @@
-############# BERT + CNN ###########
+############# BERT NLI ###########
 ################################################################
 
 from __future__ import absolute_import
@@ -54,10 +54,28 @@ def main(args):
     except OSError:
         pass
 
-    train_df.labels, label2idx = data.data_utils.convert_categorical_label_to_int(train_df.labels, \
+    nli_train_df = pd.DataFrame()
+    nli_val_df = pd.DataFrame()
+
+    mnli = data.data_utils.mnli_data(train_df.labels.unique())
+
+    df_ = pd.DataFrame()
+
+    for i in tqdm(range(train_df.shape[0])):
+        df_['Id'], df_['words'], df_['text2'], df_['labels'], df_['orig_label'] = mnli.convert_to_mnli_format(\
+                                                            train_df.Id.iloc[i], train_df.words.iloc[i], train_df.labels.iloc[i])
+        nli_train_df = pd.concat([nli_train_df, df_])
+
+    for i in tqdm(range(val_df.shape[0])):
+        df_['Id'], df_['words'], df_['text2'], df_['labels'], df_['orig_label'] = mnli.convert_to_mnli_format(\
+                                                            val_df.Id.iloc[i], val_df.words.iloc[i], val_df.labels.iloc[i])
+        nli_val_df = pd.concat([nli_val_df, df_])
+
+
+    nli_train_df.labels, label2idx = data.data_utils.convert_categorical_label_to_int(nli_train_df.labels, \
                                                          save_path=os.path.join(model_save_dir,'label2idx.pkl'))
 
-    val_df.labels, _ = data.data_utils.convert_categorical_label_to_int(val_df.labels, \
+    nli_val_df.labels, _ = data.data_utils.convert_categorical_label_to_int(nli_val_df.labels, \
                                                          save_path=os.path.join(model_save_dir,'label2idx.pkl'))
 
     print ("Tokenization")
@@ -72,24 +90,18 @@ def main(args):
     else:
         tokenizer = AutoTokenizer.from_pretrained(args.transformer_model_name)
 
-    trainX = data.data_utils.compute_transformer_input_arrays(train_df, 'words', tokenizer, args.max_text_len, bertweettokenizer)
-    valX = data.data_utils.compute_transformer_input_arrays(val_df, 'words', tokenizer, args.max_text_len, bertweettokenizer)
+    trainX = data.data_utils.compute_transformer_input_arrays(nli_train_df, 'words', tokenizer, args.max_text_len, 'text2', bertweettokenizer)
+    valX = data.data_utils.compute_transformer_input_arrays(nli_val_df, 'words', tokenizer, args.max_text_len, 'text2', bertweettokenizer)
 
-    outputs = data.data_utils.compute_output_arrays(train_df, 'labels')
-    val_outputs = data.data_utils.compute_output_arrays(val_df, 'labels')
+    outputs = data.data_utils.compute_output_arrays(nli_train_df, 'labels')
+    val_outputs = data.data_utils.compute_output_arrays(nli_val_df, 'labels')
 
     outputs = outputs[:,np.newaxis]
     val_outputs = val_outputs[:,np.newaxis]
 
-
     print ("Modelling")
 
-    if args.pooling_type == 'mean':
-        model = models.tf_models.transformer_with_cnn_with_meanpooling(args.transformer_model_name, args.max_text_len, dropout=args.dropout)
-    elif args.pooling_type == 'max':
-        model = models.tf_models.transformer_with_cnn_with_maxpooling(args.transformer_model_name, args.max_text_len, dropout=args.dropout)
-    else:
-        raise ValueError("{} pooling type not supported".format(args.pooling_type))
+    model = models.tf_models.transformer_base_model_cls_token(args.transformer_model_name, args.max_text_len, dropout=args.dropout)
 
     print (model.summary())
 
@@ -110,7 +122,7 @@ def main(args):
       "learning_rate": args.lr,
       "batch_size": args.train_batch_size,
       "dropout": args.dropout,
-      "model_description": args.transformer_model_name + ' {} pooling with CNN'.format(args.pooling_type)
+      "model_description": args.transformer_model_name + ' with NLI'
     }
 
     with open(os.path.join(model_save_dir, 'config.pkl'), 'wb') as handle:
@@ -134,33 +146,53 @@ def main(args):
 
     val_pred = np.round(model.predict(valX))[:,0]
 
-    print ("Evaluation")
+    print ("NLI Evaluation")
     
-    f1 = f1_score(val_df.labels, val_pred)
-    precision = precision_score(val_df.labels, val_pred)
-    recall = recall_score(val_df.labels, val_pred)
+    f1 = f1_score(nli_val_df.labels, val_pred)
+    precision = precision_score(nli_val_df.labels, val_pred)
+    recall = recall_score(nli_val_df.labels, val_pred)
 
+    print ("NLI scores: \nF1 {}, Precision {} and Recall {}".format(f1, precision, recall))
+
+    print ("Original Evaluation")
+    nli_val_df['pred_proba'] = model.predict(valX)[:,0]
+
+    nli_val_df_ = nli_val_df.sort_values(['Id','pred_proba'], ascending=[True, False]).reset_index(drop=True)
+    nli_val_df_ = nli_val_df_.drop_duplicates(subset=['Id']).reset_index(drop=True)
+
+    assert nli_val_df_.shape[0] == val_df.shape[0]
+
+    val_df = pd.merge(val_df, nli_val_df, how='inner')
+
+    train_df.labels, _ = data.data_utils.convert_categorical_label_to_int(train_df.labels, \
+                                                         save_path=os.path.join(model_save_dir,'label2idx_orig.pkl'))
+    val_df.labels, _ = data.data_utils.convert_categorical_label_to_int(val_df.labels, \
+                                                         save_path=os.path.join(model_save_dir,'label2idx_orig.pkl'))
+    val_df.orig_label, _ = data.data_utils.convert_categorical_label_to_int(val_df.orig_label, \
+                                                         save_path=os.path.join(model_save_dir,'label2idx_orig.pkl'))
+
+    f1 = f1_score(nli_val_df.labels, val_df.orig_label)
+    precision = precision_score(nli_val_df.labels, val_df.orig_label)
+    recall = recall_score(nli_val_df.labels, val_df.orig_label)
+
+    '''
     snapshot_val_pred = np.round(np.concatenate(snapshot.best_scoring_snapshots, axis=-1).mean(-1))
-
     print ("Snapshot Evaluation")
     
     f1_snapshot = f1_score(val_df.labels, snapshot_val_pred)
     precision_snapshot = precision_score(val_df.labels, snapshot_val_pred)
     recall_snapshot = recall_score(val_df.labels, snapshot_val_pred)
-
-    #f1 = f1_score([idx2label[i] for i in val_df.labels], [idx2label[i] for i in val_pred])
-    #precision = precision_score([idx2label[i] for i in val_df.labels], [idx2label[i] for i in val_pred])
-    #recall = recall_score([idx2label[i] for i in val_df.labels], [idx2label[i] for i in val_pred])
+    '''
 
     results_ = pd.DataFrame()
-    results_['description'] = [args.transformer_model_name + ' {} pooling with CNN'.format(args.pooling_type)]
+    results_['description'] = [args.transformer_model_name + ' with NLI']
     results_['f1'] = [f1]
     results_['precision'] = [precision]
     results_['recall'] = [recall]
 
     print (results_.iloc[0])
 
-    print ("Snapshot scores: \nF1 {}, Precision {} and Recall {}".format(f1_snapshot, precision_snapshot, recall_snapshot))
+    #print ("Snapshot scores: \nF1 {}, Precision {} and Recall {}".format(f1_snapshot, precision_snapshot, recall_snapshot))
 
     if os.path.exists('../results/result.csv'):
         results = pd.read_csv('../results/result.csv')
@@ -178,10 +210,10 @@ if __name__ == '__main__':
     parser.add_argument('--val_data', type=str, default='../data/raw/COVID19Tweet/valid.tsv', required=False,
                         help='validation data')
 
-    parser.add_argument('--transformer_model_name', type=str, default='roberta-base', required=False,
+    parser.add_argument('--transformer_model_name', type=str, default='textattack/roberta-base-MNLI', required=False,
                         help='transformer model name')
 
-    parser.add_argument('--model_save_path', type=str, default='../models/model12/', required=False,
+    parser.add_argument('--model_save_path', type=str, default='../models/model14/', required=False,
                         help='model save path')
 
     parser.add_argument('--max_text_len', type=int, default=100, required=False,
