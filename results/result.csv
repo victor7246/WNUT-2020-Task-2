@@ -11,4 +11,5 @@ roberta-base max of all tokens from all layers,0.9064748201438848,0.880239520958
 roberta-base mean of all tokens from layers 9_10_11_12,0.9083585095669688,0.8656429942418427,0.9555084745762712
 roberta-base max of all tokens from layers 9_10_11_12,0.911134,0.879684,0.944915
 roberta-base mean pooling with CNN,0.905738,0.876984,0.936441
-roberta-base max pooling with CNN,0.897216,0.906926,0.887712
+roberta-base max pooling with CNN,0.897216,0.906926,0.8877120000000001
+textattack/roberta-base-MNLI with NLI,0.9042224510813593,0.8797595190380761,0.9300847457627118

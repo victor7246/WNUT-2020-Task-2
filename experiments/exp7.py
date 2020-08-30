@@ -37,6 +37,8 @@ from src import data, models
 
 from sklearn.metrics import f1_score, precision_score, recall_score
 
+pd.options.display.max_colwidth=-1
+
 def main(args):
     train_df = data.load_data.load_custom_text_as_pd(args.train_data,sep='\t',header=True, \
                               text_column=['Text'],target_column=['Label'])
@@ -77,6 +79,9 @@ def main(args):
 
     nli_val_df.labels, _ = data.data_utils.convert_categorical_label_to_int(nli_val_df.labels, \
                                                          save_path=os.path.join(model_save_dir,'label2idx.pkl'))
+
+    #print (nli_train_df.head(5))
+    #print (nli_val_df.head(5))
 
     print ("Tokenization")
 
@@ -157,23 +162,28 @@ def main(args):
     print ("Original Evaluation")
     nli_val_df['pred_proba'] = model.predict(valX)[:,0]
 
-    nli_val_df_ = nli_val_df.sort_values(['Id','pred_proba'], ascending=[True, False]).reset_index(drop=True)
+    nli_val_df_ = nli_val_df.sort_values(['Id','pred_proba'], ascending=[True, True]).reset_index(drop=True)
     nli_val_df_ = nli_val_df_.drop_duplicates(subset=['Id']).reset_index(drop=True)
+    val_df = val_df.drop_duplicates(subset=['Id']).reset_index(drop=True)
 
     assert nli_val_df_.shape[0] == val_df.shape[0]
 
-    val_df = pd.merge(val_df, nli_val_df, how='inner')
+    val_df = pd.merge(val_df, nli_val_df_[['Id','orig_label']], how='inner')
 
-    train_df.labels, _ = data.data_utils.convert_categorical_label_to_int(train_df.labels, \
-                                                         save_path=os.path.join(model_save_dir,'label2idx_orig.pkl'))
+    #train_df.labels, _ = data.data_utils.convert_categorical_label_to_int(train_df.labels, \
+    #                                                     save_path=os.path.join(model_save_dir,'label2idx_orig.pkl'))
+    print (val_df.iloc[0])
+
     val_df.labels, _ = data.data_utils.convert_categorical_label_to_int(val_df.labels, \
                                                          save_path=os.path.join(model_save_dir,'label2idx_orig.pkl'))
     val_df.orig_label, _ = data.data_utils.convert_categorical_label_to_int(val_df.orig_label, \
                                                          save_path=os.path.join(model_save_dir,'label2idx_orig.pkl'))
 
-    f1 = f1_score(nli_val_df.labels, val_df.orig_label)
-    precision = precision_score(nli_val_df.labels, val_df.orig_label)
-    recall = recall_score(nli_val_df.labels, val_df.orig_label)
+    print (val_df.iloc[0])
+
+    f1 = f1_score(val_df.labels, val_df.orig_label)
+    precision = precision_score(val_df.labels, val_df.orig_label)
+    recall = recall_score(val_df.labels, val_df.orig_label)
 
     '''
     snapshot_val_pred = np.round(np.concatenate(snapshot.best_scoring_snapshots, axis=-1).mean(-1))
