@@ -34,10 +34,12 @@ execute RoBERTa baseline by running
 |  Model | F1  | Precision  | Recall  |
 |---|---|---|---|
 | Logistic Regression   | 0.762  | 0.806  | 0.722  |
-|  BiLSTM |  0.808 |  0.854 |  0.767 |
-|  RoBERTa<sub>base</sub> | <b>0.908</b>  |  0.872 |  <b>0.949</b> |
-|  ALBERT<sub>base</sub> | 0.892  |  0.882 |  0.902 |
-|  BERTweet | 0.899  |  <b>0.888</b> |  0.911 |
+| BiLSTM |  0.808 |  0.854 |  0.767 |
+| BERT<sub>base</sub> cased | 0.882  |  0.893 |  0.870 |
+| RoBERTa<sub>base</sub> | <b>0.908</b>  |  0.872 |  <b>0.949</b> |
+| XLNet<sub>base</sub> cased | <b>0.908</b>  |  0.872 |  <b>0.949</b> |
+| ALBERT<sub>base</sub> | 0.892  |  0.882 |  0.902 |
+| BERTweet | 0.899  |  <b>0.888</b> |  0.911 |
 
 ## Citation
 

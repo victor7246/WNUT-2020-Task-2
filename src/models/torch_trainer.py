@@ -20,8 +20,8 @@ import pytorch_lightning as pl
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.metrics.metric import NumpyMetric
 
-def BCELoss(outputs, targets):
-    return nn.BCELoss()(outputs, targets.view(-1, 1))
+def BCEWithLogitsLoss(outputs, targets):
+    return nn.BCEWithLogitsLoss()(outputs, targets.view(-1, 1))
 
 class PLF1Score(NumpyMetric):
     def __init__(self):
@@ -56,9 +56,9 @@ class PLTrainer(pl.LightningModule):
         self.num_train_steps = num_train_steps
         self.lr = lr
         
-        self.loss_fn = BCELoss
+        self.loss_fn = BCEWithLogitsLoss
         self.metric_name = 'f1'
-        self.metric = PLF1Score
+        self.metric = PLF1Score()
 
         self.save_hyperparameters()
 
@@ -71,6 +71,7 @@ class PLTrainer(pl.LightningModule):
     def forward(self, x):
 
         return self.model(ids=x["ids"], mask=x["mask"], token_type_ids=x["token_type_ids"])
+        #return self.model(ids=x["ids"], mask=x["mask"])
 
     def training_step(self, batch, batch_idx):
         di = batch
@@ -80,6 +81,7 @@ class PLTrainer(pl.LightningModule):
         targets = di["targets"]
 
         outputs = self.model(ids=ids, mask=mask, token_type_ids=token_type_ids)
+        #outputs = self.model(ids=ids, mask=mask)
 
         loss = self.loss_fn(outputs, targets)
 
@@ -97,6 +99,7 @@ class PLTrainer(pl.LightningModule):
         targets = di["targets"]
 
         outputs = self.model(ids=ids, mask=mask, token_type_ids=token_type_ids)
+        #outputs = self.model(ids=ids, mask=mask)
 
         loss = self.loss_fn(outputs, targets)
 

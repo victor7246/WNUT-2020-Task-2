@@ -4,6 +4,7 @@ import pickle
 from collections import Counter
 from tqdm import tqdm
 import tensorflow as tf
+import torch
 
 def flatten(elems):
     return [e for elem in elems for e in elem]
@@ -76,7 +77,7 @@ def _convert_to_transformer_inputs(text, tokenizer, max_sequence_length, text2=N
                     input_ids = input_ids + [tokenizer.pad_token_id]*(max_sequence_length - len(input_ids))
         
         input_masks = [1] * len(input_ids)
-        input_segments = [tokenizer.cls_token_id]*(len(input_ids)-1) + [tokenizer.sep_token_id] #inputs["token_type_ids"]
+        input_segments = [0]*len(input_ids) #[0]*(len(input_ids)-1) + [1] #inputs["token_type_ids"]
         padding_length = length - len(input_ids)
         padding_id = tokenizer.pad_token_id
         input_ids = input_ids + ([padding_id] * padding_length)
@@ -175,3 +176,27 @@ def read_text_embeddings(filename):
     
 def compute_output_arrays(df, column):
     return np.asarray(df[column])
+
+class TorchDataLoader:
+    def __init__(self, ids, mask, token_type_ids, targets):
+        self.ids = ids
+        self.mask = mask
+        self.token_type_ids = token_type_ids
+        self.targets = targets
+
+    def __len__(self):
+        return len(self.ids)
+
+    def __getitem__(self, item):
+        ids = self.ids[item]
+        mask = self.mask[item]
+        token_type_ids = self.token_type_ids[item]
+        targets = self.targets[item]
+
+        return {
+                "ids": torch.tensor(ids, dtype=torch.long),
+                "mask": torch.tensor(mask, dtype=torch.long),
+                "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
+                "targets": torch.tensor(targets, dtype=torch.float)
+                }
+

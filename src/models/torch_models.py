@@ -34,9 +34,9 @@ class TransformerWithMixout(nn.Module):
 
     def forward(self, ids, mask, token_type_ids):
         o2 = self.base_model(ids, attention_mask=mask, token_type_ids=token_type_ids)
-        o2 = o2[0][:,1:,:]
+        o2 = o2[0][:,0,:]
         bo = self.drop(o2)
-        bo = torch.mean(o2, dim=1)
+        #bo = torch.mean(o2, dim=1)
         #bo = self.drop(o2)
         output = self.out(bo)
 
