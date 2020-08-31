@@ -56,6 +56,24 @@ def test_pl_trainer(data_loader, model):
             
     return fin_outputs
 
+def test_torch(data_loader, model, device):
+    fin_targets = []
+    fin_outputs = []
+    
+    model.to(device)
+
+    with torch.no_grad():
+        for bi, d in tqdm(enumerate(data_loader), total=len(data_loader)):
+            ids = d['ids'].to(device)
+            mask = d['mask'].to(device)
+            token_type_ids = d['token_type_ids'].to(device)
+
+            outputs = model(ids, mask, token_type_ids)
+
+            fin_outputs.extend(torch.sigmoid(outputs).cpu().detach().numpy().tolist())
+            
+    return fin_outputs
+
 class BasicTrainer:
     
     def __init__(self, model, train_data_loader, val_data_loader, device, test_data_loader=None):
@@ -153,7 +171,7 @@ class BasicTrainer:
 
     def train(self, epochs, optimizer, scheduler, MODEL_PATH, config, l2, early_stopping_rounds=5, use_wandb=True, seed=42):
 
-        self.scorer = PLF1Score()
+        self.scorer = f1_score #PLF1Score()
         self.loss_fn = BCEWithLogitsLoss
         self.optimizer = optimizer
         self.scheduler = scheduler
@@ -194,21 +212,25 @@ class BasicTrainer:
                 train_loss = train_loss/len(self.train_data_loader)
                 val_loss = val_loss/len(self.val_data_loader)
 
-                train_metric = self.scorer(train_targets, train_out)
-                val_metric = self.scorer(val_targets,val_out)
+                train_metric = self.scorer(np.round(np.array(train_targets)), np.round(np.array(train_out)))
+                val_metric = self.scorer(np.round(np.array(val_targets)), np.round(np.array(val_out)))
 
                 with np.printoptions(precision=3):
                     print("Train loss = {} Train metric = {} Val loss = {} Val metric = {}".format(round(train_loss.detach().cpu().numpy().item(), 3),round(train_metric,3),\
                         round(val_loss.detach().cpu().numpy().item(), 3),round(val_metric, 3)))
                 
                 if val_metric > best_metric:
-                    #torch.save(self.model.state_dict(), os.path.join(MODEL_PATH,'model.bin'))
-                    torch.save(self.model, os.path.join(MODEL_PATH,'model.bin'))
+                    torch.save(self.model.state_dict(), os.path.join(MODEL_PATH,'model.bin'))
+                    print ("Saving best model in {}".format(MODEL_PATH))
+                    #torch.save(self.model, os.path.join(MODEL_PATH,'model.bin'))
                     best_metric = val_metric
                     bad_epochs = 0
-
                 else:
                     bad_epochs += 1
+
+            else:
+                print ("Early stopping")
+                break
 
             stats.update({"epoch_{}".format(epoch): {"train_loss": round(train_loss.detach().cpu().numpy().item(), 3), "train_metric": round(train_metric,3), \
                 "val_loss": round(val_loss.detach().cpu().numpy().item(), 3),  "val_metric": round(val_metric,3)}})

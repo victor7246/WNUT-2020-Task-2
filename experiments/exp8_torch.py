@@ -182,7 +182,7 @@ def main(args):
         model.load_state_dict(updated_checkpoint_state)
 
     '''
-    
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print ("Device: {}".format(device))
 
@@ -219,7 +219,7 @@ def main(args):
 
     model.load_state_dict(torch.load(os.path.join(args.model_save_path, 'model.bin')))
 
-    val_pred = models.torch_trainer.test_pl_trainer(val_data_loader, model)
+    val_pred = models.torch_trainer.test_torch(val_data_loader, model, device)
 
     val_pred = np.round(np.array(val_pred))[:,0]
 
@@ -283,7 +283,7 @@ if __name__ == '__main__':
     parser.add_argument('--train_batch_size', type=int, default=32, required=False,
                         help='train batch size')
 
-    parser.add_argument('--wandb_logging', type=bool, default=False, required=False,
+    parser.add_argument('--wandb_logging', type=bool, default=True, required=False,
                         help='wandb logging')
 
     parser.add_argument('--seed', type=int, default=42, required=False,
