@@ -58,7 +58,7 @@ def transformer_base_model_cls_token(pretrained_model_name, max_text_len, dropou
         regularizer = tf.keras.regularizers.l1_l2(l1=l1_reg, l2=l2_reg)
     elif l1_reg > 0:
         regularizer = tf.keras.regularizers.l1(l1=l1_reg)
-    elif:
+    elif l2_reg > 0:
         regularizer = tf.keras.regularizers.l2(l2=l2_reg)
 
     if multidrop_num > 0 and dropout > 0:

@@ -99,7 +99,14 @@ def main(args):
     print ("Train and val loader length {} and {}".format(len(train_data_loader), len(val_data_loader)))
 
     print ("Modelling")
-    model = models.torch_models.TransformerWithMixout(args.transformer_model_name, main_dropout_prob=args.dropout, mixout_prob=args.mixout_prob, dropout=args.dropout, n_out=1)
+    if args.multi_sample_dropout_count == 0 and args.mixout_prob == 0:
+        model = models.torch_models.Transformer(args.transformer_model_name, dropout=args.dropout)
+    elif args.mixout_prob > 0:
+        model = models.torch_models.TransformerWithMixout(args.transformer_model_name, mixout_prob=args.mixout_prob)
+    elif args.multi_sample_dropout_count > 0 and args.mixout_prob == 0 and args.dropout > 0:
+        model = models.torch_models.TransformerMultiSample(args.transformer_model_name, dropout=args.dropout, multi_sample_dropout_count=args.multi_sample_dropout_count)
+    else:
+        raise ValueError("Configurations do not match. Multi-sample dropout needs >0 dropout rate.")
 
     print (model)
 
@@ -110,12 +117,16 @@ def main(args):
       "batch_size": args.train_batch_size,
       "dropout": args.dropout,
       "mixout": args.mixout_prob,
-      "model_description": args.transformer_model_name + ' with mixout prob {}'.format(args.mixout_prob)
+      "l2": args.l2,
+      "multi_sample_dropout_count": args.multi_sample_dropout_count,
+      "model_description": args.transformer_model_name + ' with dropout {}, mixout prob {}, multi_sample_dropout_count {} and l2 regularization {}'.format(\
+                                        args.dropout, args.mixout_prob, args.multi_sample_dropout_count, args.l2)
     }
 
     with open(os.path.join(model_save_dir, 'config.pkl'), 'wb') as handle:
         pickle.dump(config, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
+     
+    '''
     checkpoint_callback = ModelCheckpoint(
                 filepath=args.model_save_path,
                 save_top_k=1,
@@ -152,7 +163,7 @@ def main(args):
 
     num_train_steps = int(len(train_data_loader) * args.epochs)
 
-    pltrainer = models.torch_trainer.PLTrainer(num_train_steps, model, args.lr, seed=args.seed)
+    pltrainer = models.torch_trainer.PLTrainer(num_train_steps, model, args.lr, args.l2, seed=args.seed)
 
     #pltrainer = Trainer(resume_from_checkpoint=glob(args.model_save_path+'*.ckpt')[0])
 
@@ -170,9 +181,47 @@ def main(args):
         updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint['state_dict'].items()])
         model.load_state_dict(updated_checkpoint_state)
 
+    '''
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print ("Device: {}".format(device))
+
+    trainer = models.torch_trainer.BasicTrainer(model, train_data_loader, val_data_loader, device)
+
+    param_optimizer = list(trainer.model.named_parameters())
+    no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
+    optimizer_parameters = [
+        {
+            "params": [
+                p for n, p in param_optimizer if not any(nd in n for nd in no_decay)
+            ],
+            "weight_decay": 0.01,
+        },
+        {
+            "params": [
+                p for n, p in param_optimizer if any(nd in n for nd in no_decay)
+            ],
+            "weight_decay": 0.0,
+        },
+    ]
+    num_train_steps = int(len(train_data_loader) * args.epochs)
+
+    optimizer = AdamW(optimizer_parameters, lr=args.lr)
+    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0, num_training_steps=num_train_steps)
+
+    use_wandb = _has_wandb and args.wandb_logging
+
+    if os.path.exists(os.path.join(args.model_save_path, 'model.bin')) == False:
+        trainer.train(args.epochs, optimizer, scheduler, args.model_save_path, config, args.l2,  \
+            early_stopping_rounds=5, use_wandb=use_wandb, seed=args.seed)
+    else:
+        model.load_state_dict(torch.load(os.path.join(args.model_save_path, 'model.bin')))
+
+    model.load_state_dict(torch.load(os.path.join(args.model_save_path, 'model.bin')))
+
     val_pred = models.torch_trainer.test_pl_trainer(val_data_loader, model)
 
-    val_pred = np.round(val_pred)[:,0]
+    val_pred = np.round(np.array(val_pred))[:,0]
 
     print ("Evaluation")
     
@@ -185,7 +234,7 @@ def main(args):
     #recall = recall_score([idx2label[i] for i in val_df.labels], [idx2label[i] for i in val_pred])
 
     results_ = pd.DataFrame()
-    results_['description'] = [args.transformer_model_name + ' with mixout prob {}'.format(args.mixout_prob)]
+    results_['description'] = [config['model_description']]
     results_['f1'] = [f1]
     results_['precision'] = [precision]
     results_['recall'] = [recall]
@@ -216,10 +265,15 @@ if __name__ == '__main__':
 
     parser.add_argument('--max_text_len', type=int, default=100, required=False,
                     help='maximum length of text')
-    parser.add_argument('--dropout', type=float, default=.2, required=False,
+
+    parser.add_argument('--dropout', type=float, default=0, required=False,
                     help='dropout')
-    parser.add_argument('--mixout_prob', type=float, default=.6, required=False,
+    parser.add_argument('--mixout_prob', type=float, default=0, required=False,
                     help='mixout prob')
+    parser.add_argument('--multi_sample_dropout_count', type=int, default=0, required=False,
+                    help='multi sample dropout count')
+    parser.add_argument('--l2', type=float, default=0, required=False,
+                    help='l2 regularization')
 
     parser.add_argument('--epochs', type=int, default=15, required=False,
                         help='number of epochs')
