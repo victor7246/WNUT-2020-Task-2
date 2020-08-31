@@ -7,6 +7,7 @@ import sys
 import os
 
 import argparse
+from collections import OrderedDict
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
 
@@ -16,6 +17,7 @@ import numpy as np
 import pickle
 from collections import Counter
 from tqdm import tqdm
+from glob import glob
 
 try:
     from dotenv import find_dotenv, load_dotenv
@@ -108,7 +110,7 @@ def main(args):
       "batch_size": args.train_batch_size,
       "dropout": args.dropout,
       "mixout": args.mixout_prob,
-      "model_description": args.transformer_model_name + ' with mixout'
+      "model_description": args.transformer_model_name + ' with mixout prob {}'.format(args.mixout_prob)
     }
 
     with open(os.path.join(model_save_dir, 'config.pkl'), 'wb') as handle:
@@ -151,9 +153,24 @@ def main(args):
     num_train_steps = int(len(train_data_loader) * args.epochs)
 
     pltrainer = models.torch_trainer.PLTrainer(num_train_steps, model, args.lr, seed=args.seed)
-    trainer.fit(pltrainer, train_data_loader, val_data_loader)
 
-    val_pred = models.torch_trainer.test_pl_trainer(val_data_loader, pltrainer)
+    #pltrainer = Trainer(resume_from_checkpoint=glob(args.model_save_path+'*.ckpt')[0])
+
+    checkpoints = glob(args.model_save_path+'*.ckpt')
+
+    if len(checkpoints) > 0:
+        best_checkpoint = torch.load(checkpoints[0])
+        updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint['state_dict'].items()])
+        model.load_state_dict(updated_checkpoint_state)
+
+    else:
+        trainer.fit(pltrainer, train_data_loader, val_data_loader)
+        checkpoints = glob(args.model_save_path+'*.ckpt')
+        best_checkpoint = torch.load(checkpoints[0])
+        updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint['state_dict'].items()])
+        model.load_state_dict(updated_checkpoint_state)
+
+    val_pred = models.torch_trainer.test_pl_trainer(val_data_loader, model)
 
     val_pred = np.round(val_pred)[:,0]
 
@@ -168,7 +185,7 @@ def main(args):
     #recall = recall_score([idx2label[i] for i in val_df.labels], [idx2label[i] for i in val_pred])
 
     results_ = pd.DataFrame()
-    results_['description'] = [args.transformer_model_name + ' with mixout']
+    results_['description'] = [args.transformer_model_name + ' with mixout prob {}'.format(args.mixout_prob)]
     results_['f1'] = [f1]
     results_['precision'] = [precision]
     results_['recall'] = [recall]

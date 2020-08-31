@@ -24,7 +24,7 @@ def bilstm(n_units, max_text_len, num_words, emb_dim, dropout=0):
     
     return model
 
-def transformer_base_model_cls_token(pretrained_model_name, max_text_len, dropout=0, bert_hidden_act='gelu', bert_hidden_dropout=False, multidrop_num=0):
+def transformer_base_model_cls_token(pretrained_model_name, max_text_len, dropout=0, bert_hidden_act='gelu', bert_hidden_dropout=False, multidrop_num=0, l1_reg=0, l2_reg=0):
     ids = tf.keras.layers.Input((max_text_len,), dtype=tf.int32)
     
     mask = tf.keras.layers.Input((max_text_len,), dtype=tf.int32)
@@ -53,17 +53,30 @@ def transformer_base_model_cls_token(pretrained_model_name, max_text_len, dropou
     else:
         x = basemodel(ids, attention_mask=mask)[1]
     
+    regularizer = None
+    if l1_reg > 0 and l2_reg > 0:
+        regularizer = tf.keras.regularizers.l1_l2(l1=l1_reg, l2=l2_reg)
+    elif l1_reg > 0:
+        regularizer = tf.keras.regularizers.l1(l1=l1_reg)
+    elif:
+        regularizer = tf.keras.regularizers.l2(l2=l2_reg)
+
     if multidrop_num > 0 and dropout > 0:
         multidrops = [tf.keras.layers.Dropout(dropout) for i in multidrop_num]
-        denses = [tf.keras.layers.Dense(1, activation='linear') for i in multidrop_num]
+        if regularizer:
+            denses = [tf.keras.layers.Dense(1, activation='linear', kernel_regularizer=regularizer) for i in multidrop_num]
+        else:
+            denses = [tf.keras.layers.Dense(1, activation='linear') for i in multidrop_num]
 
     if dropout > 0:
         if multidrop_num == 0:
             x = tf.keras.layers.Dropout(dropout)(x)
-            x = tf.keras.layers.Dense(1, activation='sigmoid')(x)
+            if regularizer:
+                x = tf.keras.layers.Dense(1, activation='sigmoid', kernel_regularizer=regularizer)(x)
+            else:
+                x = tf.keras.layers.Dense(1, activation='sigmoid')(x)
 
         else:
-
             x2 = tf.keras.layers.Concatenate()([denses[i](drop_layer[i](x)) for i in range(multidrop_num)])
             x = tf.keras.layers.Dense(1, use_bias=False, activation='linear')(x2)
             x = tf.keras.layers.Activation('sigmoid')(x)

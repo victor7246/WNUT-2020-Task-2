@@ -34,12 +34,12 @@ class PLF1Score(NumpyMetric):
 
         return self.scorer(x,y)
 
-def test_pl_trainer(data_loader, pltrainer):
+def test_pl_trainer(data_loader, model):
     fin_targets = []
     fin_outputs = []
     with torch.no_grad():
         for bi, d in tqdm(enumerate(data_loader), total=len(data_loader)):
-            outputs = pltrainer(d)
+            outputs = model(d['ids'], d['mask'], d['token_type_ids'])
             fin_outputs.extend(torch.sigmoid(outputs).cpu().detach().numpy().tolist())
             
     return fin_outputs
