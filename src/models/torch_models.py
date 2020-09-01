@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import numpy as np
 import torch
 import torch.nn as nn
 from transformers import AutoModel, AutoConfig
@@ -12,39 +13,39 @@ class TransformerWithMixout(nn.Module):
         config = AutoConfig.from_pretrained(pretrained_model_name, \
                                         output_hidden_states=True, output_attentions=False)
         config.hidden_dropout_prob = dropout
-        model = AutoModel.from_pretrained(pretrained_model_name, config=config)
+        self.base_model = AutoModel.from_pretrained(pretrained_model_name, config=config)
         
-        for i in range(model.config.num_hidden_layers):
+        for i in range(self.base_model .config.num_hidden_layers):
             num = '{}'.format(i)
-            for name, module in model._modules['encoder']._modules['layer']._modules[num]._modules['intermediate']._modules.items():
+            for name, module in self.base_model._modules['encoder']._modules['layer']._modules[num]._modules['intermediate']._modules.items():
                 if name == 'dropout' and isinstance(module, nn.Dropout):
-                    model._modules['encoder']._modules['layer']._modules[num]._modules['intermediate']._modules[name] = nn.Dropout(dropout)
-                    #setattr(model, name, nn.Dropout(0))
+                    self.base_model._modules['encoder']._modules['layer']._modules[num]._modules['intermediate']._modules[name] = nn.Dropout(dropout)
+                    #setattr(self.base_model , name, nn.Dropout(0))
                 if name.split('.')[-1] == 'dense' and isinstance(module, nn.Linear):
                     target_state_dict = module.state_dict()
                     bias = True if module.bias is not None else False
                     new_module = MixLinear(module.in_features, module.out_features, 
                                            bias, target_state_dict['weight'], mixout_prob)
                     new_module.load_state_dict(target_state_dict)
-                    #setattr(model, name, new_module)
-                    model._modules['encoder']._modules['layer']._modules[num]._modules['intermediate']._modules[name] = new_module
+                    #setattr(self.base_model , name, new_module)
+                    self.base_model._modules['encoder']._modules['layer']._modules[num]._modules['intermediate']._modules[name] = new_module
 
-            for name, module in model._modules['encoder']._modules['layer']._modules[num]._modules['output']._modules.items():
+            for name, module in self.base_model._modules['encoder']._modules['layer']._modules[num]._modules['output']._modules.items():
                 if name == 'dropout' and isinstance(module, nn.Dropout):
-                    model._modules['encoder']._modules['layer']._modules[num]._modules['output']._modules[name] = nn.Dropout(dropout)
-                    #setattr(model, name, nn.Dropout(0))
+                    self.base_model._modules['encoder']._modules['layer']._modules[num]._modules['output']._modules[name] = nn.Dropout(dropout)
+                    #setattr(self.base_model , name, nn.Dropout(0))
                 if name.split('.')[-1] == 'dense' and isinstance(module, nn.Linear):
                     target_state_dict = module.state_dict()
                     bias = True if module.bias is not None else False
                     new_module = MixLinear(module.in_features, module.out_features, 
                                            bias, target_state_dict['weight'], mixout_prob)
                     new_module.load_state_dict(target_state_dict)
-                    #setattr(model, name, new_module)
-                    model._modules['encoder']._modules['layer']._modules[num]._modules['output']._modules[name] = new_module
+                    #setattr(self.base_model, name, new_module)
+                    self.base_model._modules['encoder']._modules['layer']._modules[num]._modules['output']._modules[name] = new_module
 
-        self.base_model = model
+        #self.base_model = model
         self.drop = nn.Dropout(dropout)
-        self.out = nn.Linear(model.config.hidden_size, n_out)
+        self.out = nn.Linear(self.base_model.config.hidden_size, n_out)
 
     def forward(self, ids, mask, token_type_ids):
         o2 = self.base_model(ids, attention_mask=mask, token_type_ids=token_type_ids)
@@ -62,11 +63,11 @@ class Transformer(nn.Module):
         config = AutoConfig.from_pretrained(pretrained_model_name, \
                                         output_hidden_states=True, output_attentions=False)
         config.hidden_dropout_prob = dropout
-        model = AutoModel.from_pretrained(pretrained_model_name, config=config)
+        self.base_model = AutoModel.from_pretrained(pretrained_model_name, config=config)
 
-        self.base_model = model
+        #self.base_model = model
         self.drop = nn.Dropout(dropout)
-        self.out = nn.Linear(model.config.hidden_size, n_out)
+        self.out = nn.Linear(self.base_model.config.hidden_size, n_out)
 
     def forward(self, ids, mask, token_type_ids):
         o2 = self.base_model(ids, attention_mask=mask, token_type_ids=token_type_ids)
@@ -78,21 +79,23 @@ class Transformer(nn.Module):
         return output
 
 class TransformerMultiSample(nn.Module):
-    def __init__(self, pretrained_model_name, dropout=.2, multi_sample_dropout_count=5, n_out=1):
+    def __init__(self, pretrained_model_name, device, dropout=.2, multi_sample_dropout_count=5, n_out=1):
         super(TransformerMultiSample, self).__init__()
+        self.device = device
+        
         config = AutoConfig.from_pretrained(pretrained_model_name, \
                                         output_hidden_states=True, output_attentions=False)
         config.hidden_dropout_prob = dropout
-        model = AutoModel.from_pretrained(pretrained_model_name, config=config)
+        self.base_model = AutoModel.from_pretrained(pretrained_model_name, config=config).to(device)
 
-        self.base_model = model
+        #self.base_model = model
         self.multi_sample_dropout_count = multi_sample_dropout_count
-        self.drops = [nn.Dropout(dropout) for i in range(multi_sample_dropout_count)]
-        self.outs = [nn.Linear(model.config.hidden_size, n_out) for i in range(multi_sample_dropout_count)]
-        self.final_out = nn.Linear(multi_sample_dropout_count, 1, bias=False)
+        self.drops = [nn.Dropout(np.random.random()*dropout).to(device) for i in range(multi_sample_dropout_count)]
+        self.outs = [nn.Linear(self.base_model.config.hidden_size, n_out).to(device) for i in range(multi_sample_dropout_count)]
+        self.final_out = nn.Linear(multi_sample_dropout_count, 1, bias=False).to(device)
 
     def forward(self, ids, mask, token_type_ids):
-        o2 = self.base_model(ids, attention_mask=mask, token_type_ids=token_type_ids)
+        o2 = self.base_model(ids.to(self.device), attention_mask=mask.to(self.device), token_type_ids=token_type_ids.to(self.device))
         o2 = o2[0][:,0,:]
         bo = torch.cat([self.outs[i](self.drops[i](o2)) for i in range(self.multi_sample_dropout_count)], -1)
         

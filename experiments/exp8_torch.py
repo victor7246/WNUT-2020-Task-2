@@ -99,12 +99,15 @@ def main(args):
     print ("Train and val loader length {} and {}".format(len(train_data_loader), len(val_data_loader)))
 
     print ("Modelling")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print ("Device: {}".format(device))
+
     if args.multi_sample_dropout_count == 0 and args.mixout_prob == 0:
         model = models.torch_models.Transformer(args.transformer_model_name, dropout=args.dropout)
     elif args.mixout_prob > 0:
         model = models.torch_models.TransformerWithMixout(args.transformer_model_name, mixout_prob=args.mixout_prob)
     elif args.multi_sample_dropout_count > 0 and args.mixout_prob == 0 and args.dropout > 0:
-        model = models.torch_models.TransformerMultiSample(args.transformer_model_name, dropout=args.dropout, multi_sample_dropout_count=args.multi_sample_dropout_count)
+        model = models.torch_models.TransformerMultiSample(args.transformer_model_name, device, dropout=args.dropout, multi_sample_dropout_count=args.multi_sample_dropout_count)
     else:
         raise ValueError("Configurations do not match. Multi-sample dropout needs >0 dropout rate.")
 
@@ -126,13 +129,14 @@ def main(args):
     with open(os.path.join(model_save_dir, 'config.pkl'), 'wb') as handle:
         pickle.dump(config, handle, protocol=pickle.HIGHEST_PROTOCOL)
      
-    '''
+    
     checkpoint_callback = ModelCheckpoint(
                 filepath=args.model_save_path,
                 save_top_k=1,
                 verbose=True,
                 monitor='val_metric',
-                mode='max'
+                mode='max',
+                save_weights_only=True
                 )
 
     earlystop = EarlyStopping(
@@ -142,84 +146,86 @@ def main(args):
                mode='max'
                )
 
-    if _has_wandb and args.wandb_logging:
-        wandb.init(project="wnut-task2",config=config)
-        wandb_logger = WandbLogger()
+    if args.lightning == 'true':
+        if _has_wandb and args.wandb_logging == 'true':
+            wandb.init(project="wnut-task2-regularization",config=config)
+            wandb_logger = WandbLogger()
 
-        if torch.cuda.is_available():
-            trainer = Trainer(gpus=1, max_epochs=args.epochs, logger=wandb_logger, \
-                                checkpoint_callback=checkpoint_callback, callbacks=[earlystop])
+            if torch.cuda.is_available():
+                trainer = Trainer(gpus=1, max_epochs=args.epochs, logger=wandb_logger, \
+                                    checkpoint_callback=checkpoint_callback, callbacks=[earlystop])
+            else:
+                trainer = Trainer(max_epochs=args.epochs, logger=wandb_logger, \
+                                    checkpoint_callback=checkpoint_callback, callbacks=[earlystop])
+
         else:
-            trainer = Trainer(max_epochs=args.epochs, logger=wandb_logger, \
-                                checkpoint_callback=checkpoint_callback, callbacks=[earlystop])
+            if torch.cuda.is_available():
+                trainer = Trainer(gpus=1, max_epochs=args.epochs, \
+                                    checkpoint_callback=checkpoint_callback, callbacks=[earlystop])
+            else:
+                trainer = Trainer(max_epochs=args.epochs, \
+                                    checkpoint_callback=checkpoint_callback, callbacks=[earlystop])        
 
-    else:
-        if torch.cuda.is_available():
-            trainer = Trainer(gpus=1, max_epochs=args.epochs, \
-                                checkpoint_callback=checkpoint_callback, callbacks=[earlystop])
-        else:
-            trainer = Trainer(max_epochs=args.epochs, \
-                                checkpoint_callback=checkpoint_callback, callbacks=[earlystop])        
+        num_train_steps = int(len(train_data_loader) * args.epochs)
 
-    num_train_steps = int(len(train_data_loader) * args.epochs)
+        pltrainer = models.torch_trainer.PLTrainer(num_train_steps, model, args.lr, args.l2, seed=args.seed)
 
-    pltrainer = models.torch_trainer.PLTrainer(num_train_steps, model, args.lr, args.l2, seed=args.seed)
+        #pltrainer = Trainer(resume_from_checkpoint=glob(args.model_save_path+'*.ckpt')[0])
 
-    #pltrainer = Trainer(resume_from_checkpoint=glob(args.model_save_path+'*.ckpt')[0])
-
-    checkpoints = glob(args.model_save_path+'*.ckpt')
-
-    if len(checkpoints) > 0:
-        best_checkpoint = torch.load(checkpoints[0])
-        updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint['state_dict'].items()])
-        model.load_state_dict(updated_checkpoint_state)
-
-    else:
-        trainer.fit(pltrainer, train_data_loader, val_data_loader)
         checkpoints = glob(args.model_save_path+'*.ckpt')
-        best_checkpoint = torch.load(checkpoints[0])
-        updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint['state_dict'].items()])
-        model.load_state_dict(updated_checkpoint_state)
 
-    '''
+        if len(checkpoints) > 0:
+            best_checkpoint = torch.load(checkpoints[0])
+            updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint['state_dict'].items()])
+            #updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint.items()])
+            model.load_state_dict(updated_checkpoint_state)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print ("Device: {}".format(device))
+        else:
+            trainer.fit(pltrainer, train_data_loader, val_data_loader)
+            checkpoints = glob(args.model_save_path+'*.ckpt')
+            best_checkpoint = torch.load(checkpoints[0])
+            updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint['state_dict'].items()])
+            #updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint.items()])
+            model.load_state_dict(updated_checkpoint_state)
 
-    trainer = models.torch_trainer.BasicTrainer(model, train_data_loader, val_data_loader, device)
+        val_pred = models.torch_trainer.test_pl_trainer(val_data_loader, model)
 
-    param_optimizer = list(trainer.model.named_parameters())
-    no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
-    optimizer_parameters = [
-        {
-            "params": [
-                p for n, p in param_optimizer if not any(nd in n for nd in no_decay)
-            ],
-            "weight_decay": 0.01,
-        },
-        {
-            "params": [
-                p for n, p in param_optimizer if any(nd in n for nd in no_decay)
-            ],
-            "weight_decay": 0.0,
-        },
-    ]
-    num_train_steps = int(len(train_data_loader) * args.epochs)
-
-    optimizer = AdamW(optimizer_parameters, lr=args.lr)
-    scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0, num_training_steps=num_train_steps)
-
-    use_wandb = _has_wandb and args.wandb_logging
-
-    if os.path.exists(os.path.join(args.model_save_path, 'model.bin')) == False:
-        trainer.train(args.epochs, optimizer, scheduler, args.model_save_path, config, args.l2,  \
-            early_stopping_rounds=5, use_wandb=use_wandb, seed=args.seed)
     else:
+
+        trainer = models.torch_trainer.BasicTrainer(model, train_data_loader, val_data_loader, device)
+
+        param_optimizer = list(trainer.model.named_parameters())
+        no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
+        optimizer_parameters = [
+            {
+                "params": [
+                    p for n, p in param_optimizer if not any(nd in n for nd in no_decay)
+                ],
+                "weight_decay": 0.01,
+            },
+            {
+                "params": [
+                    p for n, p in param_optimizer if any(nd in n for nd in no_decay)
+                ],
+                "weight_decay": 0.0,
+            },
+        ]
+        num_train_steps = int(len(train_data_loader) * args.epochs)
+
+        optimizer = AdamW(optimizer_parameters, lr=args.lr)
+        scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0, num_training_steps=num_train_steps)
+
+        use_wandb = _has_wandb and (args.wandb_logging == 'true')
+
+        if os.path.exists(os.path.join(args.model_save_path, 'model.bin')) == False:
+            trainer.train(args.epochs, optimizer, scheduler, args.model_save_path, config, args.l2,  \
+                early_stopping_rounds=5, use_wandb=use_wandb, seed=args.seed)
+        else:
+            model.load_state_dict(torch.load(os.path.join(args.model_save_path, 'model.bin')))
+
         model.load_state_dict(torch.load(os.path.join(args.model_save_path, 'model.bin')))
 
-    model.load_state_dict(torch.load(os.path.join(args.model_save_path, 'model.bin')))
-
-    val_pred = models.torch_trainer.test_torch(val_data_loader, model, device)
+        val_pred = models.torch_trainer.test_torch(val_data_loader, model, device)
 
     val_pred = np.round(np.array(val_pred))[:,0]
 
@@ -283,7 +289,10 @@ if __name__ == '__main__':
     parser.add_argument('--train_batch_size', type=int, default=32, required=False,
                         help='train batch size')
 
-    parser.add_argument('--wandb_logging', type=bool, default=True, required=False,
+    parser.add_argument('--lightning', type=str, default='false', required=False,
+                        help='Pytorch Lightning')
+
+    parser.add_argument('--wandb_logging', type=str, default='true', required=False,
                         help='wandb logging')
 
     parser.add_argument('--seed', type=int, default=42, required=False,
