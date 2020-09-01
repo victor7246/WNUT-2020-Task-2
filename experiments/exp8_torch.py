@@ -50,6 +50,10 @@ def main(args):
                           text_column=['Text'],target_column=['Label'])
 
     train_df = pd.DataFrame(train_df,copy=False)
+    if 'aug_p' in train_df.columns:
+        train_df = train_df[train_df.aug_p <= args.aug_p_rate].reset_index(drop=True)
+        train_df = train_df.drop(['aug_p'], axis=1)
+
     val_df = pd.DataFrame(val_df,copy=False)
     val_df.columns = train_df.columns
 
@@ -122,8 +126,8 @@ def main(args):
       "mixout": args.mixout_prob,
       "l2": args.l2,
       "multi_sample_dropout_count": args.multi_sample_dropout_count,
-      "model_description": args.transformer_model_name + ' with dropout {}, mixout prob {}, multi_sample_dropout_count {} and l2 regularization {}'.format(\
-                                        args.dropout, args.mixout_prob, args.multi_sample_dropout_count, args.l2)
+      "model_description": args.transformer_model_name + ' with dropout {}, mixout prob {}, multi_sample_dropout_count {}, l2 regularization {} and augmentation rate {}'.format(\
+                                        args.dropout, args.mixout_prob, args.multi_sample_dropout_count, args.l2, args.aug_p_rate)
     }
 
     with open(os.path.join(model_save_dir, 'config.pkl'), 'wb') as handle:
@@ -280,6 +284,8 @@ if __name__ == '__main__':
                     help='multi sample dropout count')
     parser.add_argument('--l2', type=float, default=0, required=False,
                     help='l2 regularization')
+    parser.add_argument('--aug_p_rate', type=float, default=0.3, required=False,
+                    help='augmentation probability rate for training data')
 
     parser.add_argument('--epochs', type=int, default=15, required=False,
                         help='number of epochs')

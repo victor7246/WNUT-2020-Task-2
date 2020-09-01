@@ -12,7 +12,7 @@ import numpy as np
 
 from transformers import AdamW, get_linear_schedule_with_warmup
 
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, accuracy_score
 
 import torch
 import torch.nn as nn
@@ -39,6 +39,17 @@ class PLF1Score(NumpyMetric):
     def __init__(self):
         super(PLF1Score, self).__init__(f1_score)
         self.scorer = f1_score
+
+    def forward(self, x, y):
+        x = np.round(np.array(x))
+        y = np.round(np.array(y))
+
+        return self.scorer(x,y)
+
+class PLAccuracy(NumpyMetric):
+    def __init__(self):
+        super(PLAccuracy, self).__init__(accuracy_score)
+        self.scorer = accuracy_score
 
     def forward(self, x, y):
         x = np.round(np.array(x))
@@ -268,14 +279,18 @@ class PLTrainer(pl.LightningModule):
         
         self.l2 = l2
 
-        self.loss_fn = BCEWithLogitsLoss
+        self.loss_fn = models.torch_trainer.BCEWithLogitsLoss
         self.metric_name = 'f1'
-        self.metric = PLF1Score()
+        self.metric = models.torch_trainer.PLAccuracy()
 
         self.save_hyperparameters()
 
         self.print_stats()
-
+        
+        self.train_predictions = []
+        self.val_predictions = []
+        self.test_predictions = []
+        
     def print_stats(self):
         print ("[LOG] Total number of parameters to learn {}".format(sum(p.numel() for p in self.model.parameters() \
                                                                  if p.requires_grad)))
@@ -308,7 +323,9 @@ class PLTrainer(pl.LightningModule):
 
         tensorboard_logs = {'train_loss': loss, "train {}".format(self.metric_name): metric_value}
 
-        return {'loss': loss, 'train_metric': metric_value, 'log': tensorboard_logs}
+        return {'loss': loss, 'train_metric': metric_value, \
+                'log': tensorboard_logs, 'targets': targets, 'predictions': torch.sigmoid(outputs)}
+    
 
     def validation_step(self, batch, batch_idx):
         di = batch
@@ -328,12 +345,13 @@ class PLTrainer(pl.LightningModule):
                 L2_reg = L2_reg + torch.norm(param, 2)
 
         loss = loss + self.l2 * L2_reg
-
+        
         metric_value = self.metric(targets,torch.sigmoid(outputs))
 
         tensorboard_logs = {'val_loss': loss, "val {}".format(self.metric_name): metric_value}
 
-        return {'val_loss': loss, 'val_metric': metric_value, 'log': tensorboard_logs}
+        return {'val_loss': loss, 'val_metric': metric_value, \
+                'log': tensorboard_logs, 'val_targets': targets, 'val_predictions': torch.sigmoid(outputs)}
 
     def configure_optimizers(self):
 
@@ -361,16 +379,42 @@ class PLTrainer(pl.LightningModule):
 
     def training_epoch_end(self, outputs):
         train_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
-        train_metric_mean = torch.stack([x['train_metric'] for x in outputs]).mean()
-        print ("Train loss = {} Train metric = {}".format(round(train_loss_mean.detach().cpu().numpy().item(), 3),round(train_metric_mean.detach().cpu().numpy().item(), 3)))
+        targets = []
+        predictions = []
+        for out in outputs:
+            targets.extend(out['targets'])
+            predictions.extend(out['predictions'])
+        
+        targets = torch.cat(targets, 0)
+        predictions = torch.cat(predictions, 0)
+        
+        self.train_predictions.append(predictions)
+        
+        train_metric = torch.stack([x['train_metric'] for x in outputs]).mean()
+        #train_metric = torch.tensor(np.array([self.metric(targets, predictions)]), dtype=torch.float)
+        
+        print ("Train loss = {} Train metric = {}".format(round(train_loss_mean.detach().cpu().numpy().item(), 3),round(train_metric.detach().cpu().numpy().item(), 3)))
 
-        return {'train_loss': train_loss_mean, 'train_metric': train_metric_mean}
+        return {'train_loss': train_loss_mean, 'train_metric': train_metric}
 
     def validation_epoch_end(self, outputs):
         val_loss_mean = torch.stack([x['val_loss'] for x in outputs]).mean()
-        val_metric_mean = torch.stack([x['val_metric'] for x in outputs]).mean()
-        print ("val loss = {} val metric = {} ".format(round(val_loss_mean.detach().cpu().numpy().item(), 3),round(val_metric_mean.detach().cpu().numpy().item(), 3)))
+        targets = []
+        predictions = []
+        for out in outputs:
+            targets.extend(out['val_targets'])
+            predictions.extend(out['val_predictions'])
+        
+        targets = torch.cat(targets, 0)
+        predictions = torch.cat(predictions, 0)
+        
+        self.val_predictions.append(predictions)
+        
+        val_metric = torch.stack([x['val_metric'] for x in outputs]).mean()
+        #val_metric = torch.tensor(np.array([self.metric(targets, predictions)]), dtype=torch.float)
+        
+        print ("val loss = {} val metric = {} ".format(round(val_loss_mean.detach().cpu().numpy().item(), 3),round(val_metric.detach().cpu().numpy().item(), 3)))
 
-        return {'val_loss': val_loss_mean, 'val_metric': val_metric_mean}
+        return {'val_loss': val_loss_mean, 'val_metric': val_metric}
 
     
