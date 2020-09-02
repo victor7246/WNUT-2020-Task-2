@@ -4,7 +4,7 @@ Bi-LSTM,0.8080357142857143,0.8537735849056604,0.7669491525423728
 bert-base-cased,0.8819742489270386,0.8934782608695652,0.8707627118644068
 roberta-base,0.9087221095334684,0.8715953307392996,0.9491525423728814
 xlnet-base-cased,0.8941641938674579,0.8385899814471243,0.9576271186440678
-albert-base-v2,0.8921465968586386,0.8819875776397516,0.902542372881356
+albert-base-v2,0.8921465968586386,0.8819875776397516,0.9025423728813561
 BERTweet,0.8995815899581591,0.8884297520661157,0.9110169491525424
 roberta-base mean of all tokens from last layer,0.8961303462321792,0.8627450980392157,0.9322033898305084
 roberta-base max of all tokens from last layer,0.8953140578265205,0.8455743879472694,0.951271186440678
@@ -12,7 +12,7 @@ roberta-base mean of all tokens from all layers,0.9076142131979696,0.87134502923
 roberta-base max of all tokens from all layers,0.9064748201438848,0.8802395209580839,0.934322033898305
 roberta-base mean of all tokens from layers 9_10_11_12,0.9083585095669688,0.8656429942418427,0.9555084745762712
 roberta-base max of all tokens from layers 9_10_11_12,0.911134,0.879684,0.944915
-roberta-base mean pooling with CNN,0.905738,0.876984,0.936441
+roberta-base mean pooling with CNN,0.9057379999999999,0.876984,0.936441
 roberta-base max pooling with CNN,0.897216,0.906926,0.8877120000000001
 textattack/roberta-base-MNLI with NLI,0.9042224510813592,0.8797595190380761,0.9300847457627118
 "roberta-base with dropout 0.0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0",0.9010309278350516,0.8775100401606426,0.9258474576271186
@@ -20,9 +20,9 @@ textattack/roberta-base-MNLI with NLI,0.9042224510813592,0.8797595190380761,0.93
 "roberta-base with dropout 0.2, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0",0.9096385542168672,0.8645038167938931,0.9597457627118644
 "roberta-base with dropout 0.3, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0",0.9023162134944612,0.8598848368522073,0.9491525423728814
 "roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0.001",0.9037656903765692,0.8925619834710744,0.9152542372881356
-"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0.005",0.9028213166144201,0.8907216494845361,0.9152542372881356
+"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0.005",0.90282131661442,0.8907216494845361,0.9152542372881356
 "roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0.02",0.9108485499462944,0.9237472766884532,0.8983050847457628
-"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0.1",0.9070010000000001,0.8948450000000001,0.919492
+"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0.1",0.907001,0.8948450000000001,0.919492
 "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 3 and l2 regularization 0",0.9049049049049048,0.8576850094876659,0.9576271186440678
 "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 5 and l2 regularization 0",0.9061553985872856,0.8651252408477842,0.951271186440678
 "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 7 and l2 regularization 0",0.9122098890010092,0.8709055876685935,0.9576271186440678
@@ -33,4 +33,9 @@ textattack/roberta-base-MNLI with NLI,0.9042224510813592,0.8797595190380761,0.93
 "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.3",0.9142280524722504,0.8728323699421965,0.9597457627118644
 "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.1",0.920408163265306,0.8877952755905512,0.9555084745762712
 "roberta-base with dropout 0.2, mixout prob 0, multi_sample_dropout_count 7, l2 regularization 0.02 and augmentation rate 0.1",0.9054325955734406,0.8620689655172413,0.9533898305084746
-"xlm-roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.3",0.8833798882681564,0.8736187845303868,0.893361581920904
+"xlm-roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.3",0.8833798882681564,0.8736187845303868,0.8933615819209041
+"roberta-base with dropout 0, mixout prob 0.5, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.3",0.8759776536312849,0.9267139479905436,0.8305084745762712
+"roberta-base with dropout 0, mixout prob 0.5, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.3",0.8898043254376931,0.8657314629258517,0.9152542372881356
+"roberta-base with dropout 0, mixout prob 0.6, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.3",0.9040816326530612,0.8720472440944882,0.9385593220338984
+"roberta-base with dropout 0, mixout prob 0.7, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.3",0.8822882288228823,0.9176201372997712,0.8495762711864406
+"roberta-base with dropout 0, mixout prob 0.8, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.3",0.8991596638655461,0.8916666666666667,0.9067796610169492

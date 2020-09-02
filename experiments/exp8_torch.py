@@ -187,11 +187,15 @@ def main(args):
             model.load_state_dict(updated_checkpoint_state)
             val_pred = models.torch_trainer.test_pl_trainer(val_data_loader, model)
 
+            val_pred = np.round(np.array(val_pred))[:,0]
+
         else:
             trainer.fit(pltrainer, train_data_loader, val_data_loader)
             checkpoints = glob(args.model_save_path+'*.ckpt')
             best_checkpoint = int(checkpoints[0].split('/')[-1].split('.')[0].split('=')[-1])
             val_pred = pltrainer.val_predictions[best_checkpoint].detach().cpu().numpy()
+
+            val_pred = np.round(np.array(val_pred))
             #best_checkpoint = torch.load(checkpoints[0])
             #updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint['state_dict'].items()])
             #updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint.items()])
@@ -234,7 +238,7 @@ def main(args):
 
         val_pred = models.torch_trainer.test_torch(val_data_loader, model, device)
 
-    val_pred = np.round(np.array(val_pred))[:,0]
+        val_pred = np.round(np.array(val_pred))[:,0]
 
     print ("Evaluation")
     
