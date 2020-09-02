@@ -11,6 +11,7 @@ from collections import OrderedDict
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
 
+import re
 import pandas as pd
 import numpy as np
 
@@ -51,6 +52,7 @@ def main(args):
 
     train_df = pd.DataFrame(train_df,copy=False)
     if 'aug_p' in train_df.columns:
+        train_df.aug_p = train_df.aug_p.astype(float)
         train_df = train_df[train_df.aug_p <= args.aug_p_rate].reset_index(drop=True)
         train_df = train_df.drop(['aug_p'], axis=1)
 
@@ -183,16 +185,17 @@ def main(args):
             updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint['state_dict'].items()])
             #updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint.items()])
             model.load_state_dict(updated_checkpoint_state)
+            val_pred = models.torch_trainer.test_pl_trainer(val_data_loader, model)
 
         else:
             trainer.fit(pltrainer, train_data_loader, val_data_loader)
             checkpoints = glob(args.model_save_path+'*.ckpt')
-            best_checkpoint = torch.load(checkpoints[0])
-            updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint['state_dict'].items()])
+            best_checkpoint = int(checkpoints[0].split('/')[-1].split('.')[0].split('=')[-1])
+            val_pred = pltrainer.val_predictions[best_checkpoint].detach().cpu().numpy()
+            #best_checkpoint = torch.load(checkpoints[0])
+            #updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint['state_dict'].items()])
             #updated_checkpoint_state = OrderedDict([('.'.join(key.split('.')[1:]), v) for key, v in best_checkpoint.items()])
-            model.load_state_dict(updated_checkpoint_state)
-
-        val_pred = models.torch_trainer.test_pl_trainer(val_data_loader, model)
+            #model.load_state_dict(updated_checkpoint_state)
 
     else:
 
