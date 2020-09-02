@@ -279,9 +279,9 @@ class PLTrainer(pl.LightningModule):
         
         self.l2 = l2
 
-        self.loss_fn = models.torch_trainer.BCEWithLogitsLoss
+        self.loss_fn = BCEWithLogitsLoss
         self.metric_name = 'f1'
-        self.metric = models.torch_trainer.PLAccuracy()
+        self.metric = PLAccuracy()
 
         self.save_hyperparameters()
 
