@@ -27,8 +27,8 @@ textattack/roberta-base-MNLI with NLI,0.9042224510813592,0.8797595190380761,0.93
 "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 5, l2 regularization 0 and augmentation rate 0",0.9061553985872856,0.8651252408477842,0.951271186440678
 "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 7, l2 regularization 0 and augmentation rate 0",0.9122098890010092,0.8709055876685935,0.9576271186440678
 "roberta-base with dropout 0.2, mixout prob 0, multi_sample_dropout_count 7, l2 regularization 0 and augmentation rate 0",0.9127789046653144,0.8754863813229572,0.9533898305084746
-"roberta-base with dropout 0.3, mixout prob 0, multi_sample_dropout_count 7, l2 regularization 0",0.9012961116650048,0.8512241054613936,0.9576271186440678
-"roberta-base with dropout 0.2, mixout prob 0, multi_sample_dropout_count 7, l2 regularization 0.02",0.9137055837563453,0.8771929824561403,0.9533898305084746
+"roberta-base with dropout 0.3, mixout prob 0, multi_sample_dropout_count 7, l2 regularization 0 and augmentation rate 0",0.9012961116650048,0.8512241054613936,0.9576271186440678
+"roberta-base with dropout 0.2, mixout prob 0, multi_sample_dropout_count 7, l2 regularization 0.02 and augmentation rate 0",0.9137055837563453,0.8771929824561403,0.9533898305084746
 "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.2",0.9142280524722504,0.8728323699421965,0.9597457627118644
 "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.3",0.9142280524722504,0.8728323699421965,0.9597457627118644
 "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.1",0.920408163265306,0.8877952755905512,0.9555084745762712
