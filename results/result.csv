@@ -15,18 +15,18 @@ roberta-base max of all tokens from layers 9_10_11_12,0.911134,0.879684,0.944915
 roberta-base mean pooling with CNN,0.9057379999999999,0.876984,0.936441
 roberta-base max pooling with CNN,0.897216,0.906926,0.8877120000000001
 textattack/roberta-base-MNLI with NLI,0.9042224510813592,0.8797595190380761,0.9300847457627118
-"roberta-base with dropout 0.0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0",0.9010309278350516,0.8775100401606426,0.9258474576271186
-"roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0",0.911917098445596,0.8924949290060852,0.9322033898305084
-"roberta-base with dropout 0.2, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0",0.9096385542168672,0.8645038167938931,0.9597457627118644
-"roberta-base with dropout 0.3, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0",0.9023162134944612,0.8598848368522073,0.9491525423728814
-"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0.001",0.9037656903765692,0.8925619834710744,0.9152542372881356
-"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0.005",0.90282131661442,0.8907216494845361,0.9152542372881356
-"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0.02",0.9108485499462944,0.9237472766884532,0.8983050847457628
-"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0 and l2 regularization 0.1",0.907001,0.8948450000000001,0.919492
-"roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 3 and l2 regularization 0",0.9049049049049048,0.8576850094876659,0.9576271186440678
-"roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 5 and l2 regularization 0",0.9061553985872856,0.8651252408477842,0.951271186440678
-"roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 7 and l2 regularization 0",0.9122098890010092,0.8709055876685935,0.9576271186440678
-"roberta-base with dropout 0.2, mixout prob 0, multi_sample_dropout_count 7 and l2 regularization 0",0.9127789046653144,0.8754863813229572,0.9533898305084746
+"roberta-base with dropout 0.0, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0",0.9010309278350516,0.8775100401606426,0.9258474576271186
+"roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0",0.911917098445596,0.8924949290060852,0.9322033898305084
+"roberta-base with dropout 0.2, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0",0.9096385542168672,0.8645038167938931,0.9597457627118644
+"roberta-base with dropout 0.3, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0",0.9023162134944612,0.8598848368522073,0.9491525423728814
+"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.001",0.9037656903765692,0.8925619834710744,0.9152542372881356
+"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.005",0.90282131661442,0.8907216494845361,0.9152542372881356
+"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.02",0.9108485499462944,0.9237472766884532,0.8983050847457628
+"roberta-base with dropout 0, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.1",0.907001,0.8948450000000001,0.919492
+"roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 3, l2 regularization 0 and augmentation rate 0",0.9049049049049048,0.8576850094876659,0.9576271186440678
+"roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 5, l2 regularization 0 and augmentation rate 0",0.9061553985872856,0.8651252408477842,0.951271186440678
+"roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 7, l2 regularization 0 and augmentation rate 0",0.9122098890010092,0.8709055876685935,0.9576271186440678
+"roberta-base with dropout 0.2, mixout prob 0, multi_sample_dropout_count 7, l2 regularization 0 and augmentation rate 0",0.9127789046653144,0.8754863813229572,0.9533898305084746
 "roberta-base with dropout 0.3, mixout prob 0, multi_sample_dropout_count 7, l2 regularization 0",0.9012961116650048,0.8512241054613936,0.9576271186440678
 "roberta-base with dropout 0.2, mixout prob 0, multi_sample_dropout_count 7, l2 regularization 0.02",0.9137055837563453,0.8771929824561403,0.9533898305084746
 "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.2",0.9142280524722504,0.8728323699421965,0.9597457627118644
