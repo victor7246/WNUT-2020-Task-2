@@ -108,14 +108,7 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print ("Device: {}".format(device))
 
-    if args.multi_sample_dropout_count == 0 and args.mixout_prob == 0:
-        model = models.torch_models.Transformer(args.transformer_model_name, dropout=args.dropout)
-    elif args.mixout_prob > 0:
-        model = models.torch_models.TransformerWithMixout(args.transformer_model_name, mixout_prob=args.mixout_prob)
-    elif args.multi_sample_dropout_count > 0 and args.mixout_prob == 0 and args.dropout > 0:
-        model = models.torch_models.TransformerMultiSample(args.transformer_model_name, device, dropout=args.dropout, multi_sample_dropout_count=args.multi_sample_dropout_count)
-    else:
-        raise ValueError("Configurations do not match. Multi-sample dropout needs >0 dropout rate.")
+    model = models.torch_models.TransformerAvgPool(args.transformer_model_name, dropout=args.dropout)
 
     print (model)
 
@@ -125,17 +118,12 @@ def main(args):
       "learning_rate": args.lr,
       "batch_size": args.train_batch_size,
       "dropout": args.dropout,
-      "mixout": args.mixout_prob,
-      "l2": args.l2,
-      "multi_sample_dropout_count": args.multi_sample_dropout_count,
-      "model_description": args.transformer_model_name + ' with dropout {}, mixout prob {}, multi_sample_dropout_count {}, l2 regularization {} and augmentation rate {}'.format(\
-                                        args.dropout, args.mixout_prob, args.multi_sample_dropout_count, args.l2, args.aug_p_rate)
+      "model_description": args.transformer_model_name + ' mean of all tokens from last 4 layers'
     }
 
     with open(os.path.join(model_save_dir, 'config.pkl'), 'wb') as handle:
         pickle.dump(config, handle, protocol=pickle.HIGHEST_PROTOCOL)
      
-    
     checkpoint_callback = ModelCheckpoint(
                 filepath=args.model_save_path,
                 save_top_k=1,
@@ -277,22 +265,14 @@ if __name__ == '__main__':
     parser.add_argument('--transformer_model_name', type=str, default='roberta-base', required=False,
                         help='transformer model name')
 
-    parser.add_argument('--model_save_path', type=str, default='../models/model15/', required=False,
+    parser.add_argument('--model_save_path', type=str, default='../models/model_final/', required=False,
                         help='model save path')
 
     parser.add_argument('--max_text_len', type=int, default=100, required=False,
                     help='maximum length of text')
 
-    parser.add_argument('--dropout', type=float, default=0, required=False,
+    parser.add_argument('--dropout', type=float, default=0.2, required=False,
                     help='dropout')
-    parser.add_argument('--mixout_prob', type=float, default=0, required=False,
-                    help='mixout prob')
-    parser.add_argument('--multi_sample_dropout_count', type=int, default=0, required=False,
-                    help='multi sample dropout count')
-    parser.add_argument('--l2', type=float, default=0, required=False,
-                    help='l2 regularization')
-    parser.add_argument('--aug_p_rate', type=float, default=0.3, required=False,
-                    help='augmentation probability rate for training data')
 
     parser.add_argument('--epochs', type=int, default=15, required=False,
                         help='number of epochs')
@@ -305,7 +285,7 @@ if __name__ == '__main__':
     parser.add_argument('--lightning', type=str, default='false', required=False,
                         help='Pytorch Lightning')
 
-    parser.add_argument('--wandb_logging', type=str, default='true', required=False,
+    parser.add_argument('--wandb_logging', type=str, default='false', required=False,
                         help='wandb logging')
 
     parser.add_argument('--seed', type=int, default=42, required=False,

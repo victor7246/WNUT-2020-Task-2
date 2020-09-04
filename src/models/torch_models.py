@@ -7,6 +7,30 @@ from transformers import AutoModel, AutoConfig
 
 from .torch_layers import MixLinear
 
+class TransformerAvgPool(nn.Module):
+    def __init__(self, pretrained_model_name, device, dropout=.2, n_out=1, layers=[9,10,11,12]):
+        super(TransformerAvgPool, self).__init__()
+        self.device = device
+
+        config = AutoConfig.from_pretrained(pretrained_model_name, \
+                                        output_hidden_states=True, output_attentions=False)
+        config.hidden_dropout_prob = dropout
+        self.base_model = AutoModel.from_pretrained(pretrained_model_name, config=config).to(device)
+        self.drop = nn.Dropout(dropout)
+        self.layers = layers
+        self.final_out = nn.Linear(len(layers)*config.hidden_size, 1, bias=False).to(device)
+
+    def forward(self, ids, mask, token_type_ids):
+        o2 = self.base_model(ids.to(self.device), attention_mask=mask.to(self.device), token_type_ids=token_type_ids.to(self.device))
+        o2 = o2[-1]
+        o2 = torch.cat([o2[i] for i in self.layers], -1)
+        o2 = torch.mean(o2, 1)
+        o2 = self.drop(o2)
+        
+        output = self.final_out(o2)
+
+        return output
+
 class TransformerWithMixout(nn.Module):
     def __init__(self, pretrained_model_name, mixout_prob=.7, dropout=0, n_out=1):
         super(TransformerWithMixout, self).__init__()
@@ -82,7 +106,7 @@ class TransformerMultiSample(nn.Module):
     def __init__(self, pretrained_model_name, device, dropout=.2, multi_sample_dropout_count=5, n_out=1):
         super(TransformerMultiSample, self).__init__()
         self.device = device
-        
+
         config = AutoConfig.from_pretrained(pretrained_model_name, \
                                         output_hidden_states=True, output_attentions=False)
         config.hidden_dropout_prob = dropout
