@@ -180,7 +180,7 @@ class BasicTrainer:
                 
         return fin_outputs, total_loss, fin_targets
 
-    def train(self, epochs, optimizer, scheduler, MODEL_PATH, config, l2, early_stopping_rounds=5, use_wandb=True, seed=42):
+    def train(self, epochs, optimizer, scheduler, MODEL_PATH, config, l2=0, early_stopping_rounds=5, use_wandb=True, seed=42):
 
         self.scorer = f1_score #PLF1Score()
         self.loss_fn = BCEWithLogitsLoss

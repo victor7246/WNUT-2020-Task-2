@@ -108,7 +108,7 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print ("Device: {}".format(device))
 
-    model = models.torch_models.TransformerAvgPool(args.transformer_model_name, dropout=args.dropout)
+    model = models.torch_models.TransformerAvgPool(args.transformer_model_name, device, dropout=args.dropout)
 
     print (model)
 
@@ -162,7 +162,7 @@ def main(args):
 
         num_train_steps = int(len(train_data_loader) * args.epochs)
 
-        pltrainer = models.torch_trainer.PLTrainer(num_train_steps, model, args.lr, args.l2, seed=args.seed)
+        pltrainer = models.torch_trainer.PLTrainer(num_train_steps, model, args.lr, seed=args.seed)
 
         #pltrainer = Trainer(resume_from_checkpoint=glob(args.model_save_path+'*.ckpt')[0])
 
@@ -217,7 +217,7 @@ def main(args):
         use_wandb = _has_wandb and (args.wandb_logging == 'true')
 
         if os.path.exists(os.path.join(args.model_save_path, 'model.bin')) == False:
-            trainer.train(args.epochs, optimizer, scheduler, args.model_save_path, config, args.l2,  \
+            trainer.train(args.epochs, optimizer, scheduler, args.model_save_path, config,  \
                 early_stopping_rounds=5, use_wandb=use_wandb, seed=args.seed)
         else:
             model.load_state_dict(torch.load(os.path.join(args.model_save_path, 'model.bin')))

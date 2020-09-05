@@ -1,0 +1,1 @@
+{"text_max_len": 100, "epochs": 15, "learning_rate": 2e-05, "batch_size": 32, "dropout": 0.1, "mixout": 0, "l2": 0, "multi_sample_dropout_count": 0, "model_description": "roberta-base with dropout 0.1, mixout prob 0, multi_sample_dropout_count 0, l2 regularization 0 and augmentation rate 0.1"}

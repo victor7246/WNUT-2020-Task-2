@@ -1,0 +1,1 @@
+{"text_max_len": 100, "epochs": 15, "learning_rate": 2e-05, "batch_size": 32, "dropout": 0.2, "model_description": "roberta-base mean of all tokens from last 4 layers"}
