@@ -42,4 +42,16 @@ execute RoBERTa baseline by running
 | BERTweet | 0.899  |  <b>0.888</b> |  0.911 |
 
 ## Citation
-
+```tex
+@inproceedings{sengupta-2020-datamafia,
+    title = "DATAMAFIA at WNUT-2020 Task 2: A Study of Pre-trained Language Models along with Regularization Techniques for Downstream Tasks",
+    author = "Sengupta, Ayan",
+    booktitle = "Proceedings of the Sixth Workshop on Noisy User-generated Text (W-NUT 2020)",
+    month = nov,
+    year = "2020",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://www.aclweb.org/anthology/2020.wnut-1.51",
+    pages = "371--377"
+}
+```
